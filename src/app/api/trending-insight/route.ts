@@ -4,6 +4,7 @@ import { isAIEnabled, askLLM, detectProvider } from "@/lib/llm";
 import { withCache, deleteCache } from "@/lib/cache";
 import type { GithubRepo, SINCE_VALUES, SORT_VALUES } from "@/lib/types";
 import { applyReqSettings } from "@/lib/applyReqSettings";
+import crypto from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -33,11 +34,6 @@ export async function GET(request: NextRequest) {
     const sort = sp.get("sort") || "stars";
     const perPage = 21;
     const revalidate = sp.get("revalidate") !== null;
-
-    const cacheKey = `trending_insight:v9:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}`;
-    if (revalidate) {
-      deleteCache(cacheKey);
-    }
 
     const freshMeta = (() => {
       let provider: string | undefined;
@@ -70,6 +66,24 @@ export async function GET(request: NextRequest) {
       }
       return { provider, model, displayName };
     })();
+
+    const llmSig = (() => {
+      try {
+        const cfg = isAIEnabled() ? detectProvider() : null;
+        if (!cfg || cfg.provider === "none") return "none";
+        const hashedKey = cfg.apiKey
+          ? crypto.createHash("sha256").update(cfg.apiKey.slice(0, 48)).digest("hex").slice(0, 10)
+          : "nokey";
+        return `${cfg.provider}:${(cfg.model || "default").replace(/[^A-Za-z0-9._-]/g, "_")}:${hashedKey}`;
+      } catch {
+        return "none";
+      }
+    })();
+
+    const cacheKey = `trending_insight:v10:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}:${llmSig}`;
+    if (revalidate) {
+      deleteCache(cacheKey);
+    }
 
     const cached = await withCache(cacheKey, 86400 / 2, async () => {
       const langCount: Record<string, number> = {};

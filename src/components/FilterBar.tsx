@@ -74,7 +74,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [pathname]);
 
   const loadHotSuggestions = useCallback(async (force = false) => {
     if (mode !== "search") return;

@@ -473,6 +473,8 @@ export default function TrendingInsightCard(props: Props) {
 
   useEffect(() => {
     let alive = true;
+    setData(null);
+    setErrorMsg(null);
     fetch("/api/ai-status", attachSettingsHeaders({ cache: "no-store" }))
       .then((r) => (r.ok ? r.json() : null))
       .then((d: AiStatusResp | null) => {
@@ -482,7 +484,7 @@ export default function TrendingInsightCard(props: Props) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [since]);
 
   const endpointQuery = useMemo(() => {
     const p = new URLSearchParams();
@@ -601,10 +603,18 @@ export default function TrendingInsightCard(props: Props) {
           <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-violet-400/15 blur-2xl" />
           <div className="relative">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold px-2.5 py-1 shadow-sm">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                {(data?.displayName || aiStatus?.displayName || "AI") + " 生成"}
-              </span>
+              {data?.mode !== "fallback" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold px-2.5 py-1 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+                  {(data?.displayName || data?.provider ? (data.displayName || data.provider) : (aiStatus?.displayName || "AI")) + " 生成"}
+                </span>
+              )}
+              {data?.mode === "fallback" && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse" />
+                  本地分析（未走 AI）
+                </span>
+              )}
               <span className="rounded-full bg-slate-900/90 text-white text-[11px] font-semibold px-2.5 py-1">
                 {SINCE_LABEL[since]} · {data?.sampleCount ?? "—"} 个样本
               </span>
@@ -613,7 +623,7 @@ export default function TrendingInsightCard(props: Props) {
                   ⚠ 本地兜底（AI 不可用）
                 </span>
               )}
-              {(data?.provider || data?.model) && (
+              {(data?.provider || data?.model) && data?.mode !== "fallback" && (
                 <span
                   className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700"
                   title={`${data?.provider || "AI"} · ${data?.model || "default"}`}
