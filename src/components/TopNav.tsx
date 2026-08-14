@@ -99,9 +99,9 @@ export default function TopNav() {
                 ? "border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-300 dark:ring-indigo-500/30"
                 : "border-zinc-200 bg-white text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
             }`}
-            title="配置 GitHub Token & LLM API Key（只存在浏览器本地）"
+            title="配置 GitHub Token & 大模型 API Key（只存在浏览器本地）"
           >
-            <span>⚙</span> <span className="hidden sm:inline">设置</span>
+            <span>⚙</span> <span className="hidden sm:inline">大模型API Key设置</span>
           </Link>
           <a
             href="https://github.com"

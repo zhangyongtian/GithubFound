@@ -557,26 +557,9 @@ export default function SettingsForm() {
                   onClick={() =>
                     setSectionOpen((prev) => ({ ...prev, [section.provider]: !prev[section.provider] }))
                   }
-                  className="flex w-full items-center justify-between gap-2 rounded-t-2xl px-4 py-3 text-left"
+                  className="flex w-full items-center justify-between gap-2 rounded-t-2xl px-3.5 py-2.5 text-left sm:px-4 sm:py-3"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="text-base">
-                      {section.provider === "github"
-                        ? "🔑"
-                        : section.provider === "agnes"
-                          ? "🆓"
-                          : section.provider === "dashscope"
-                            ? "🤖"
-                            : section.provider === "deepseek"
-                              ? "🌌"
-                              : section.provider === "openai"
-                                ? "🧠"
-                                : section.provider === "anthropic"
-                                  ? "🟣"
-                                  : section.provider === "google"
-                                    ? "💎"
-                                    : "🛰"}
-                    </span>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
@@ -595,7 +578,7 @@ export default function SettingsForm() {
                                 : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30"
                             }`}
                           >
-                            {testResult.ok ? "✅ 已通过测试" : "❌ 测试未通过，展开看详情"}
+                            {testResult.ok ? "✅ 通过" : "❌ 失败，展开"}
                           </span>
                         )}
                       </div>
@@ -606,7 +589,7 @@ export default function SettingsForm() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -616,7 +599,7 @@ export default function SettingsForm() {
                           setSectionOpen((prev) => ({ ...prev, [section.provider]: true }));
                         }
                       }}
-                      className="hidden h-7 rounded-md border border-zinc-200 bg-white px-2 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 sm:inline-flex"
+                      className="hidden h-7 items-center rounded-md border border-zinc-200 bg-white px-2 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 md:inline-flex"
                     >
                       📋 填默认值
                     </button>
@@ -631,16 +614,17 @@ export default function SettingsForm() {
                           await onTestOne(section.provider, sectionProviderKey);
                         }}
                         disabled={nowTestingThis}
-                        className="inline-flex h-7 items-center gap-1 rounded-md border border-indigo-200 bg-white px-2 text-[11px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-500/30 dark:bg-zinc-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+                        className="inline-flex h-7 items-center gap-1 rounded-md border border-indigo-200 bg-white px-1.5 text-[10.5px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-50 sm:px-2 sm:text-[11px] dark:border-indigo-500/30 dark:bg-zinc-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
                       >
                         {nowTestingThis && (
                           <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
                         )}
-                        🧪 单独测这一家
+                        <span className="sm:hidden">🧪测</span>
+                        <span className="hidden sm:inline">🧪 单独测这一家</span>
                       </button>
                     )}
                     <span
-                      className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-transform dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 ${
+                      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-transform dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 ${
                         open ? "rotate-180" : ""
                       }`}
                     >
