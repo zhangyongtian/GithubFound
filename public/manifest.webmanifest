@@ -1,0 +1,13 @@
+{
+  "name": "GithubFound · GitHub 寻宝",
+  "short_name": "GithubFound",
+  "description": "发现 GitHub 每日热门项目，AI 中文总结 + 风向分析 + 魔法棒搜索重写",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#6366F1",
+  "icons": [
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
+}
