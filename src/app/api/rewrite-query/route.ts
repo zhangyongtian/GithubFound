@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
       } satisfies RewriteData);
     }
 
-    const cacheKey = `rewrite_query:v2:${q}::${language || ""}::${topic || ""}`;
+    const cacheKey = `rewrite_query:v3:${q}::${language || ""}::${topic || ""}`;
     if (revalidate) deleteCache(cacheKey);
 
     const data = await withCache<RewriteData>(cacheKey, 86400 / 2, async () => {
@@ -169,12 +169,20 @@ export async function GET(request: NextRequest) {
 }
 
 【你写 rewrittenQuery 的要点】
-1. 补充同义词/系列名，但总数要克制：比如用户搜"yolov"→ 选最关键的 3-4 个版本名 "yolov* OR yolov8 OR yolov10 OR ultralytics"
-2. 限定搜索位置：优先加 "in:name,description,topics"（如果是代码实现类项目）；如果用户描述是"教程、资料、列表类"，加 "in:readme,name,description"
-3. 排除词要特别克制：一般不超过 1 个，比如 "-awesome"，除非明显有大量噪音
-4. 短语匹配：如果是一串词且是一个项目名，用引号包裹，如 "\"segment anything\""
-5. query 内的 "OR / AND / NOT / -排除词" 总数量不要超过 5 个（GitHub 免费 Search API 有这个硬限制，多了直接 422），宁愿少一点同义词也不要超
-6. 不要包含"language:xxx"、"topic:xxx"、"stars:>xxx"、"pushed:>=xxx"这些 filter，这些放到 suggestions 字段里，让前端通过独立筛选参数呈现，不要污染 query
+1. 多语言同义词扩充（根据搜索内容判断，不要死套，科技发达国家语言同义词用引号包裹再 OR 进去）：
+   - 必加「中文」常用同义词或直译：比如 "射击游戏" → 加 "射击游戏" OR "FPS游戏" OR "第一人称射击"；"前端组件" → 加 "前端组件" OR "组件库" OR "UI组件"
+   - 「英文」标准术语本来就有，但还要再加 2~4 个英文近义词/系列名/缩写：比如 yolov → yolov8 OR yolov10 OR ultralytics
+   - 根据内容智能判断是否加这些科技强国语言同义词（日本/韩国/德国/法国/俄罗斯/以色列/芬兰/瑞典）的常用词：
+     * 日语：常见日语社区常用编程相关词汇（如 フレームワーク、AI、ゲームエンジン、ライブラリ 等）
+     * 韩语/德语/法语/俄语等只有在搜索相关领域有知名开源项目或知名公司开发时才加
+   - 语言同义词必须用双引号精确括起来，再 OR 进去，避免分词问题
+2. 合并中文 + 英文 + 其他语言同义词一起，英文主写在 rewrittenQuery 合并
+3. 限定搜索位置：优先加 "in:name,description,topics,readme"（readme 能命中多语言文档/中文/日文韩文等文档内容）；教程/资料/列表类项目才加 "in:readme,name,description"
+4. 排除词特别克制：一般不超过 1 个，比如 "-awesome"，除非明显噪音
+5. 短语匹配如果是一串词且是一个项目名，用引号包裹，如 "\"segment anything\""
+6. OR / AND / NOT / -排除词 总数量不要超过 5 个（GitHub Search API 有硬限制，多了 422），少点同义词不要超
+7. 绝对不要包含 language:/topic:/stars:/pushed: 这些 filter，这些写进 suggestions
+8. 中文/其他非英文词汇、或 日语/韩语/德语 等国家语言的同义词 要用双引号包着
 `;
 
       const ai = await askLLM(

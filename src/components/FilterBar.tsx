@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useEffect, useMemo, useTransition, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LANGUAGES, TOPICS, SORT_OPTIONS, SINCE_OPTIONS } from "@/lib/types";
 import { attachSettingsHeaders } from "@/lib/clientSettings";
 
@@ -56,12 +56,12 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
-  const [isPending, startTransition] = useTransition();
   const [searching, setSearching] = useState(false);
   const [rewriting, setRewriting] = useState(false);
   const [aiStatus, setAiStatus] = useState<AiStatusResp | null>(null);
   const [hotChips, setHotChips] = useState<HotSuggestion[] | null>(null);
   const [hotLoading, setHotLoading] = useState(false);
+  const navigatingFromInputRef = useRef<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -106,14 +106,14 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   }, [mode, loadHotSuggestions]);
 
   useEffect(() => {
-    if (!isPending && searching) {
-      const id = setTimeout(() => setSearching(false), 0);
-      return () => clearTimeout(id);
-    }
-  }, [isPending, searching]);
+    if (!searching) return;
+    const id = setTimeout(() => setSearching(false), 800);
+    return () => clearTimeout(id);
+  }, [searching]);
 
   const initialQuery = useMemo(() => sp.get("query") || "", [sp]);
   const initialOrig = useMemo(() => sp.get("orig_query") || "", [sp]);
+  const initialRwExp = useMemo(() => sp.get("rw_exp") || "", [sp]);
 
   const [queryInput, setQueryInput] = useState(initialOrig || initialQuery);
   const [rewriteDraft, setRewriteDraft] = useState<{
@@ -121,10 +121,34 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
     original: string;
     explanation: string;
   } | null>(null);
-  const inputKey = useMemo(
-    () => `${mode}-${initialOrig || initialQuery}-${rewriteDraft ? "rw" : "plain"}`,
-    [mode, initialOrig, initialQuery, rewriteDraft]
-  );
+
+  useEffect(() => {
+    const expected = initialOrig || initialQuery;
+    if (navigatingFromInputRef.current !== null) {
+      if (navigatingFromInputRef.current === expected) {
+        navigatingFromInputRef.current = null;
+      } else {
+        navigatingFromInputRef.current = null;
+        setQueryInput(expected);
+        setRewriteDraft(
+          expected && initialRwExp
+            ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
+            : null
+        );
+      }
+      return;
+    }
+    const activeDraftMatches =
+      rewriteDraft && (rewriteDraft.rewritten === queryInput || rewriteDraft.original === expected);
+    if (!activeDraftMatches) {
+      setQueryInput(expected);
+      setRewriteDraft(
+        expected && initialRwExp
+          ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
+          : null
+      );
+    }
+  }, [initialOrig, initialQuery, initialRwExp, rewriteDraft, queryInput]);
 
   const runRewriteIntoDraft = useCallback(
     (rawQuery: string) => {
@@ -171,10 +195,22 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
       }
       next.delete("page");
       const qs = next.toString();
+      const target = qs ? `${pathname}?${qs}` : pathname;
       setSearching(true);
-      startTransition(() => {
-        router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-      });
+      if (qs) {
+        try {
+          window.history.replaceState(window.history.state, "", target);
+        } catch {
+          router.replace(target, { scroll: false });
+        }
+      } else {
+        router.replace(target, { scroll: false });
+      }
+      const patchQuery = patch.query;
+      if (patchQuery !== undefined) {
+        navigatingFromInputRef.current = patchQuery || null;
+      }
+      router.refresh();
     },
     [router, pathname, sp]
   );
@@ -240,7 +276,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
                   {aiName} 就绪
                 </span>
               )}
-              {(searching || isPending || rewriting) && (
+              {(searching || rewriting) && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
                   <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
@@ -269,13 +305,19 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
                 🔍
               </span>
               <input
-                key={inputKey}
                 name="q"
-                defaultValue={rewriteDraft ? rewriteDraft.rewritten : initialOrig || initialQuery}
+                value={queryInput}
                 onChange={(e) => {
-                  setQueryInput(e.target.value);
-                  if (rewriteDraft && rewriteDraft.rewritten !== e.target.value.trim()) {
-                    setRewriteDraft(null);
+                  const val = e.target.value;
+                  setQueryInput(val);
+                  if (rewriteDraft) {
+                    const trimmed = val.trim();
+                    if (
+                      trimmed !== rewriteDraft.rewritten.trim() &&
+                      trimmed !== rewriteDraft.original.trim()
+                    ) {
+                      setRewriteDraft(null);
+                    }
                   }
                 }}
                 placeholder="如: 编程工具, 前端组件库, yolov 相关..."
@@ -288,7 +330,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
               <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
                 <button
                   type="button"
-                  disabled={rewriting || searching || isPending || !queryInput.trim() || !aiStatus?.enabled}
+                  disabled={rewriting || searching || !queryInput.trim() || !aiStatus?.enabled}
                   onClick={() =>
                     updateParams({ query: queryInput.trim() }, { forceRewrite: true })
                   }
@@ -321,10 +363,10 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
             </div>
             <button
               type="submit"
-              disabled={searching || isPending}
+              disabled={searching}
               className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-wait"
             >
-              {searching || isPending ? (
+              {searching ? (
                 <>
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
