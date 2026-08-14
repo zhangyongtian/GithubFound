@@ -90,62 +90,67 @@ export default function ActivitySparkline({ fullName, width = 160, height = 56 }
 
   return (
     <div
-      className="flex shrink-0 flex-col items-end gap-1"
+      className="flex shrink-0 flex-col items-center gap-1.5"
       style={{ width }}
       title={tip}
     >
       <div
-        className={`relative inline-flex w-full items-center justify-end rounded-xl px-2 py-1 ring-1 ${levelBg}`}
-        style={{ height }}
+        className={`relative flex items-center justify-center rounded-2xl px-2.5 py-2 ring-1 ${levelBg}`}
+        style={{ height: height + 16 }}
       >
-        {state.loading || weeks.length === 0 ? (
-          <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" preserveAspectRatio="none" aria-hidden>
-            <defs>
-              <linearGradient id={`spark-skel-${fullName}`} x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#e4e4e7" stopOpacity="0.5" />
-                <stop offset="50%" stopColor="#f4f4f5" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#e4e4e7" stopOpacity="0.5" />
-              </linearGradient>
-            </defs>
-            <path
-              d={`M0,${height - 4} L${width},${height - 4}`}
-              stroke={`url(#spark-skel-${fullName})`}
-              strokeWidth="3"
-              strokeLinecap="round"
-              className="animate-pulse"
-            />
-          </svg>
-        ) : (
-          <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" preserveAspectRatio="none" aria-hidden>
-            <defs>
-              <linearGradient id={`spark-area-${fullName}`} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.38" />
-                <stop offset="60%" stopColor="#34d399" stopOpacity="0.12" />
-                <stop offset="100%" stopColor="#6ee7b7" stopOpacity="0.02" />
-              </linearGradient>
-              <linearGradient id={`spark-line-${fullName}`} x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#059669" />
-                <stop offset="50%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#14b8a6" />
-              </linearGradient>
-            </defs>
-            <path d={pathArea} fill={`url(#spark-area-${fullName})`} />
-            <path
-              d={pathLine}
-              fill="none"
-              stroke={`url(#spark-line-${fullName})`}
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
+        <div
+          className="relative overflow-hidden rounded-lg"
+          style={{ width: width - 20, height }}
+        >
+          {state.loading || weeks.length === 0 ? (
+            <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" preserveAspectRatio="none" aria-hidden>
+              <defs>
+                <linearGradient id={`spark-skel-${fullName}`} x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="#e4e4e7" stopOpacity="0.5" />
+                  <stop offset="50%" stopColor="#f4f4f5" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#e4e4e7" stopOpacity="0.5" />
+                </linearGradient>
+              </defs>
+              <path
+                d={`M0,${height - 4} L${width},${height - 4}`}
+                stroke={`url(#spark-skel-${fullName})`}
+                strokeWidth="3"
+                strokeLinecap="round"
+                className="animate-pulse"
+              />
+            </svg>
+          ) : (
+            <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" preserveAspectRatio="none" aria-hidden>
+              <defs>
+                <linearGradient id={`spark-area-${fullName}`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.38" />
+                  <stop offset="60%" stopColor="#34d399" stopOpacity="0.12" />
+                  <stop offset="100%" stopColor="#6ee7b7" stopOpacity="0.02" />
+                </linearGradient>
+                <linearGradient id={`spark-line-${fullName}`} x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="#059669" />
+                  <stop offset="50%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#14b8a6" />
+                </linearGradient>
+              </defs>
+              <path d={pathArea} fill={`url(#spark-area-${fullName})`} />
+              <path
+                d={pathLine}
+                fill="none"
+                stroke={`url(#spark-line-${fullName})`}
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </div>
       </div>
-      <div className="flex w-full items-center justify-between text-[10px] font-medium leading-none">
-        <span className={`truncate ${levelColor}`}>
+      <div className="flex w-full items-center justify-between gap-1 px-1 text-[10px] font-medium leading-none">
+        <span className={`flex items-center gap-1 truncate ${levelColor}`}>
           {weeks.length === 0 ? "— 无数据" : level === "热" ? "🔥 长期活跃" : level === "温" ? "🌱 稳定维护" : "🧊 偶尔更新"}
         </span>
-        <span className="tabular-nums text-zinc-400 dark:text-zinc-500">
+        <span className="shrink-0 tabular-nums text-zinc-400 dark:text-zinc-500">
           {weeks.length === 0 ? "0/52w" : `${weeks.filter((n) => n > 0).length}/52w`}
         </span>
       </div>

@@ -414,7 +414,7 @@ export default function RepoCard({
           )}
         </div>
 
-        <div className="hidden shrink-0 sm:block self-start pl-1">
+        <div className="hidden shrink-0 sm:block self-center pl-2 pr-1">
           <ActivitySparkline fullName={repo.full_name} />
         </div>
       </div>
