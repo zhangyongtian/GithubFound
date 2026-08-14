@@ -72,13 +72,24 @@ function relaxQuery(rewritten: string, original: string, level: number): string 
       return rewritten.replace(/in:[a-z,]+/gi, "").trim() || original;
     }
     case 2: {
-      const step1 = rewritten.replace(/in:[a-z,]+/gi, "").trim();
+      let step1 = rewritten.replace(/in:[a-z,]+/gi, "").trim();
+      const chineseOrCJK = /"[^"]*[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u1e00-\u1eff][^"]*"/g;
+      step1 = step1.replace(chineseOrCJK, "").replace(/\s+OR\s+OR\s+/gi, " OR ").replace(/(^\s*OR\s+|\s+OR\s*$)/gi, "").trim();
       return step1
-        .replace(/\s+OR\s+[A-Za-z0-9.*_-]+/gi, "")
-        .replace(/\s+-[A-Za-z0-9._*-]+(\s|$)/, " ")
+        .replace(/\(\s*\)/g, "")
         .trim() || original;
     }
     case 3: {
+      let step1 = rewritten.replace(/in:[a-z,]+/gi, "").trim();
+      const chineseOrCJK = /"[^"]*[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u1e00-\u1eff][^"]*"/g;
+      step1 = step1.replace(chineseOrCJK, "").replace(/\s+OR\s+OR\s+/gi, " OR ").replace(/(^\s*OR\s+|\s+OR\s*$)/gi, "").trim();
+      const excluded = /\s+-[A-Za-z0-9._*-]+(\s|$)/g;
+      step1 = step1.replace(excluded, " ").trim();
+      return step1
+        .replace(/\(\s*\)/g, "")
+        .trim() || original;
+    }
+    case 4: {
       return original;
     }
     default:
@@ -132,7 +143,7 @@ export async function GET(request: NextRequest) {
       } satisfies RewriteData);
     }
 
-    const cacheKey = `rewrite_query:v4:${q}::${language || ""}::${topic || ""}`;
+    const cacheKey = `rewrite_query:v5:${q}::${language || ""}::${topic || ""}`;
     if (revalidate) deleteCache(cacheKey);
 
     const data = await withCache<RewriteData>(cacheKey, 86400 / 2, async () => {
@@ -228,27 +239,40 @@ export async function GET(request: NextRequest) {
       let fallbackLevel = 0;
       let finalCount = firstRewrittenCount;
 
-      const baseOriginalThreshold = originalCount > 0 ? Math.max(10, Math.floor(originalCount / 3)) : 50;
-      const rewriteUnder = (c: number) => c >= 0 && c < baseOriginalThreshold;
+      const baseOriginalThreshold = originalCount > 0 ? Math.max(2, Math.floor(originalCount / 20)) : 20;
+      const softThreshold = (c: number) => c >= 0 && c >= baseOriginalThreshold;
+      const absMin = (c: number) => c >= 0 && c >= 2;
 
-      if (rewriteUnder(firstRewrittenCount)) {
+      if (!softThreshold(firstRewrittenCount)) {
         const relaxed1 = relaxQuery(baseTrimmed, q, 1);
         const c1 = await peekTotalCount(relaxed1, language, topic);
-        if (c1 >= 0 && c1 > firstRewrittenCount && c1 >= baseOriginalThreshold) {
+        if (softThreshold(c1) && c1 > (firstRewrittenCount < 0 ? 0 : firstRewrittenCount)) {
           finalQuery = relaxed1;
           finalCount = c1;
           fallbackLevel = 1;
         } else {
           const relaxed2 = relaxQuery(baseTrimmed, q, 2);
           const c2 = await peekTotalCount(relaxed2, language, topic);
-          if (c2 >= 0 && c2 > firstRewrittenCount && c2 >= baseOriginalThreshold) {
+          if (softThreshold(c2) && c2 > (firstRewrittenCount < 0 ? 0 : firstRewrittenCount)) {
             finalQuery = relaxed2;
             finalCount = c2;
             fallbackLevel = 2;
           } else {
-            finalQuery = q;
-            finalCount = originalCount;
-            fallbackLevel = 3;
+            const relaxed3 = relaxQuery(baseTrimmed, q, 3);
+            const c3 = await peekTotalCount(relaxed3, language, topic);
+            if (absMin(c3) && c3 > (firstRewrittenCount < 0 ? 0 : firstRewrittenCount)) {
+              finalQuery = relaxed3;
+              finalCount = c3;
+              fallbackLevel = 3;
+            } else if (absMin(firstRewrittenCount)) {
+              finalQuery = baseTrimmed;
+              finalCount = firstRewrittenCount;
+              fallbackLevel = 0;
+            } else {
+              finalQuery = q;
+              finalCount = originalCount;
+              fallbackLevel = 4;
+            }
           }
         }
       }
@@ -256,11 +280,13 @@ export async function GET(request: NextRequest) {
       const baseExpl = String(parsed.explanation || "").slice(0, 140);
       let expl = baseExpl;
       if (fallbackLevel === 1) {
-        expl = baseExpl ? `${baseExpl}（为保证结果数，已自动放宽 in: 限定）` : "为保证结果数，已自动放宽 in: 限定";
+        expl = baseExpl ? `${baseExpl}（已放宽 in: 限定提升结果数）` : "已放宽 in: 限定提升结果数";
       } else if (fallbackLevel === 2) {
-        expl = baseExpl ? `${baseExpl}（为保证结果数，已自动简化同义词与排除词）` : "为保证结果数，已自动简化同义词与排除词";
+        expl = baseExpl ? `${baseExpl}（已精简中日韩同义词，保留英文主词提升结果）` : "已精简中日韩同义词，保留英文主词提升结果";
       } else if (fallbackLevel === 3) {
-        expl = baseExpl ? `${baseExpl}（为避免结果过少，已使用原始关键词）` : "为避免结果过少，已使用原始关键词";
+        expl = baseExpl ? `${baseExpl}（仅保留英文核心词与排除词，确保有结果）` : "仅保留英文核心词与排除词，确保有结果";
+      } else if (fallbackLevel === 4) {
+        expl = baseExpl ? `${baseExpl}（改写结果过少，兜底使用输入关键词）` : "改写结果过少，兜底使用输入关键词";
       }
 
       return {
