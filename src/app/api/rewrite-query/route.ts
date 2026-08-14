@@ -288,13 +288,13 @@ export async function GET(request: NextRequest) {
    - 模式 B「宽泛命中」【推荐默认用这个】不加任何 in:（因为用户经常描述不准，不加 in 能命中 README 正文/issue/discussions，结果多 5~10 倍）
    - ⚠️ 默认用模式 B（不加 in:），除非用户描述非常专业明确
 4. 排除词完全禁用！不要加任何 -awesome -tutorial -list 等！（描述不准时排除词会误伤真实目标项目）
-5. 专有项目名用引号，如 "\"segment anything\""
+5. 专有项目名用引号，如 "segment anything"
 6. OR / AND / NOT / - 总数 ≤ 5（GitHub 硬限制），名额不够裁剪顺序：先砍日韩德法 → 再砍中文同义词 → 英文核心/宽泛必保
 7. 绝对不要包含 language:/topic:/stars:/pushed: 这些 filter，写进 suggestions
 8. 所有非英文、英文短语、其他国家语言词都用双引号包着
 9. 【绝对硬约束·不遵守视为失败】rewrittenQuery 绝对禁止等于原始 q，绝对禁止纯中文（不含任何英文/数字/OR 连接）
    - 就算完全不知道怎么扩展，也至少把 q 翻译成英文后再加引号输出
-   - 例：输入 "免费电视" → 至少输出 `"free tv" OR "iptv"`，绝对不能输出 "免费电视"
+   - 例：输入 "免费电视" → 至少输出 "free tv" OR "iptv"，绝对不能输出 "免费电视"
 `;
 
       const ai = await askLLM(
