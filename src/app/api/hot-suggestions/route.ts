@@ -126,10 +126,10 @@ export async function GET(request: NextRequest) {
     const perPage = Number(sp.get("perPage")) || 21;
     const revalidate = sp.get("revalidate") !== null;
 
-    const cacheKey = `hot_suggestions:v1:${since}:${language || ""}:${topic || ""}:${perPage}`;
+    const cacheKey = `hot_suggestions:v2:${since}:${language || ""}:${topic || ""}:${perPage}`;
     if (revalidate) deleteCache(cacheKey);
 
-    const data = await withCache(cacheKey, 3600 * 12, async () => {
+    const data = await withCache(cacheKey, 3600 * 1, async () => {
       let suggestions: HotSuggestion[] = [];
       let mode: "ai" | "fallback" = "fallback";
 

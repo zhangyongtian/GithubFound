@@ -76,12 +76,14 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
     };
   }, []);
 
-  const loadHotSuggestions = useCallback(async () => {
+  const loadHotSuggestions = useCallback(async (force = false) => {
     if (mode !== "search") return;
     setHotLoading(true);
     try {
+      const qs = new URLSearchParams({ since: "monthly", perPage: "21" });
+      if (force) qs.set("revalidate", "1");
       const res = await fetch(
-        "/api/hot-suggestions?since=monthly&perPage=21",
+        `/api/hot-suggestions?${qs.toString()}`,
         attachSettingsHeaders({ cache: "no-store" })
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -127,7 +129,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   const runRewriteIntoDraft = useCallback(
     (rawQuery: string) => {
       setRewriting(true);
-      const hotPromise = loadHotSuggestions().catch(() => {});
+      const hotPromise = loadHotSuggestions(true).catch(() => {});
       const currentLang = sp.get("language");
       const currentTopic = sp.get("topic");
       const rwQs = new URLSearchParams();
@@ -339,13 +341,21 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
           </form>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
-              <span>🔥</span>
+            <button
+              type="button"
+              onClick={() => void loadHotSuggestions(true)}
+              disabled={hotLoading}
+              className="group inline-flex items-center gap-1 rounded-full bg-zinc-100/80 px-2 py-0.5 text-[11px] font-semibold text-zinc-600 ring-1 ring-zinc-200 transition-all hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-200 disabled:opacity-60 dark:bg-zinc-800/60 dark:text-zinc-400 dark:ring-zinc-700 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300 dark:hover:ring-indigo-500/30"
+              title="点击强制刷新本月热门方向"
+            >
+              <span className={`transition-transform ${hotLoading ? "animate-spin" : "group-hover:scale-110"}`}>🔥</span>
               {hotTitle}
-              {hotLoading && (
-                <span className="ml-0.5 text-[10px] font-medium text-zinc-400">（刷新中…）</span>
+              {hotLoading ? (
+                <span className="ml-0.5 text-[10px] font-medium text-zinc-400 dark:text-zinc-500">（刷新中…）</span>
+              ) : (
+                <span className="ml-0.5 text-[10px] font-medium text-zinc-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-zinc-500">↻ 刷新</span>
               )}
-            </span>
+            </button>
             {hotSugs.map((c) => {
               const sampleRepo = c.sampleRepo?.trim();
               return (
