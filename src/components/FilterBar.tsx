@@ -211,20 +211,11 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
       const qs = next.toString();
       const target = qs ? `${pathname}?${qs}` : pathname;
       setSearching(true);
-      if (qs) {
-        try {
-          window.history.replaceState(window.history.state, "", target);
-        } catch {
-          router.replace(target, { scroll: false });
-        }
-      } else {
-        router.replace(target, { scroll: false });
-      }
       const patchQuery = patch.query;
       if (patchQuery !== undefined) {
         navigatingFromInputRef.current = patchQuery || null;
       }
-      router.refresh();
+      router.replace(target, { scroll: false });
     },
     [router, pathname, sp]
   );
