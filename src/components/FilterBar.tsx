@@ -114,57 +114,53 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   const initialQuery = useMemo(() => sp.get("query") || "", [sp]);
   const initialOrig = useMemo(() => sp.get("orig_query") || "", [sp]);
   const initialRwExp = useMemo(() => sp.get("rw_exp") || "", [sp]);
+  const initialExpectedInput = initialOrig || initialQuery;
+  const initialDraft =
+    initialExpectedInput && initialRwExp
+      ? { rewritten: initialQuery, original: initialExpectedInput, explanation: initialRwExp }
+      : null;
 
-  const [queryInput, setQueryInput] = useState(initialOrig || initialQuery);
-  const [rewriteDraft, setRewriteDraft] = useState<{
-    rewritten: string;
-    original: string;
-    explanation: string;
-  } | null>(null);
+  const [queryInput, setQueryInput] = useState(initialExpectedInput);
+  const [rewriteDraft, setRewriteDraft] =
+    useState<{ rewritten: string; original: string; explanation: string } | null>(initialDraft);
   const inputFocusRef = useRef(false);
   const navigatingFromInputRef = useRef<string | null>(null);
   const programmaticInputRef = useRef(false);
 
   useEffect(() => {
-    if (inputFocusRef.current) return;
+    const expected = initialOrig || initialQuery;
+    const nextDraft =
+      expected && initialRwExp
+        ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
+        : null;
+
     if (navigatingFromInputRef.current !== null) {
-      const expected = initialOrig || initialQuery;
-      if (navigatingFromInputRef.current === expected) {
-        navigatingFromInputRef.current = null;
-      } else {
-        navigatingFromInputRef.current = null;
-        setQueryInput(expected);
-        setRewriteDraft(
-          expected && initialRwExp
-            ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
-            : null
-        );
-      }
+      navigatingFromInputRef.current = null;
+      if (!inputFocusRef.current) setQueryInput(expected);
+      setRewriteDraft(nextDraft);
       return;
     }
-    const expected = initialOrig || initialQuery;
+
+    if (inputFocusRef.current && rewriteDraft && !nextDraft) return;
+
     setQueryInput((prev) => {
       if (prev === expected) return prev;
       return expected;
     });
     setRewriteDraft((prev) => {
-      const next =
-        expected && initialRwExp
-          ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
-          : null;
-      if (!prev && !next) return prev;
+      if (!prev && !nextDraft) return prev;
       if (
         prev &&
-        next &&
-        prev.rewritten === next.rewritten &&
-        prev.original === next.original &&
-        prev.explanation === next.explanation
+        nextDraft &&
+        prev.rewritten === nextDraft.rewritten &&
+        prev.original === nextDraft.original &&
+        prev.explanation === nextDraft.explanation
       ) {
         return prev;
       }
-      return next;
+      return nextDraft;
     });
-  }, [initialOrig, initialQuery, initialRwExp]);
+  }, [initialOrig, initialQuery, initialRwExp, rewriteDraft]);
 
   const runRewriteIntoDraft = useCallback(
     (rawQuery: string) => {
