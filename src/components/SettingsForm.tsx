@@ -310,7 +310,7 @@ export default function SettingsForm() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {toast && (
         <div
           role="status"
@@ -341,7 +341,7 @@ export default function SettingsForm() {
             </p>
             <ul className="mt-2 grid gap-1 text-xs text-amber-800/85 dark:text-amber-200/80 sm:grid-cols-2">
               <li>· 优先级：🆓 Agnes（默认免费） &gt; 千问 DashScope &gt; DeepSeek &gt; OpenAI GPT &gt; Claude &gt; Gemini &gt; OpenRouter</li>
-              <li>· 每一家展开后都有「单独测试这家」按钮，测不过就只点那一家的按钮看错误原因</li>
+              <li>· 每一家展开后都有「单独测试这家」按钮，测不过就点那一家的按钮看错误原因</li>
               <li>· 不填任何 Key 也能用（Agnes 兜底免费模式，稳定性可能略差）</li>
               <li>· GitHub Token 不填默认 60 次 / 小时，填了 5000 次 / 小时</li>
             </ul>
@@ -353,7 +353,7 @@ export default function SettingsForm() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
-              ⚙️ API 配置
+              ⚙️ API 配置操作
             </h2>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               目前已填 <b>{totals.filled - (values[SELECTED_KEY] ? 1 : 0)}</b> 项 · 涉及{" "}
@@ -381,341 +381,388 @@ export default function SettingsForm() {
               onClick={onReset}
               className="inline-flex h-9 items-center gap-1 rounded-xl border border-rose-200 bg-white px-3.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50 dark:border-rose-500/30 dark:bg-zinc-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
             >
-              🗑 清空本机
+              🗑 清空本机配置
             </button>
             <button
               type="button"
               onClick={onSave}
               className="inline-flex h-9 items-center gap-1 rounded-xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 px-4 text-xs font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:brightness-110"
             >
-              💾 保存配置
+              💾 保存到浏览器本地
             </button>
           </div>
         </div>
+      </section>
 
-        <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/60 p-4 dark:border-indigo-500/20 dark:from-indigo-500/10 dark:via-zinc-900/40 dark:to-violet-500/10">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 className="flex items-center gap-2 text-sm font-extrabold text-indigo-900 dark:text-indigo-200">
-                <span>🎛️</span> 选择生效的模型服务商
-              </h3>
-              <p className="mt-1 text-[12px] text-indigo-700/80 dark:text-indigo-300/80">
-                多个 Key 同时填的时候，这里决定「实际调哪一家」。不想操心就选 <b>自动</b>，按优先级挑第一个能用的。
-              </p>
-            </div>
-            <div className="flex h-8 items-center gap-1.5 rounded-full bg-white/80 px-3 text-[11px] font-semibold text-indigo-700 ring-1 ring-indigo-200 dark:bg-zinc-900/60 dark:text-indigo-300 dark:ring-indigo-500/30">
-              {selectedProvider === "auto"
-                ? "🤖 当前：自动模式"
-                : `✨ 当前生效：${PROVIDER_OPTIONS.find((p) => p.key === selectedProvider)?.label ?? selectedProvider}`}
-            </div>
+      <section className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/60 p-4 dark:border-indigo-500/20 dark:from-indigo-500/10 dark:via-zinc-900/40 dark:to-violet-500/10">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="flex items-center gap-2 text-sm font-extrabold text-indigo-900 dark:text-indigo-200">
+              <span>🎛️</span> 选择生效的模型服务商
+            </h3>
+            <p className="mt-1 text-[12px] text-indigo-700/80 dark:text-indigo-300/80">
+              多个 Key 同时填的时候，这里决定「实际调哪一家」。不想操心就选 <b>自动</b>，按优先级挑第一个能用的。
+            </p>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-            {PROVIDER_OPTIONS.map((opt) => {
-              const active = selectedProvider === opt.key;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => setSelectedProvider(opt.key)}
-                  className={`group flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-all ${
-                    active
-                      ? "border-indigo-300 bg-white shadow-sm ring-2 ring-indigo-500/40 dark:border-indigo-500/40 dark:bg-zinc-900 dark:ring-indigo-400/40"
-                      : "border-zinc-200 bg-white/60 hover:border-indigo-200 hover:bg-white dark:border-zinc-700/60 dark:bg-zinc-900/40 dark:hover:border-indigo-500/30 dark:hover:bg-zinc-900/60"
+          <div className="flex h-8 items-center gap-1.5 rounded-full bg-white/80 px-3 text-[11px] font-semibold text-indigo-700 ring-1 ring-indigo-200 dark:bg-zinc-900/60 dark:text-indigo-300 dark:ring-indigo-500/30">
+            {selectedProvider === "auto"
+              ? "🤖 当前：自动模式"
+              : `✨ 当前生效：${PROVIDER_OPTIONS.find((p) => p.key === selectedProvider)?.label ?? selectedProvider}`}
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+          {PROVIDER_OPTIONS.map((opt) => {
+            const active = selectedProvider === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setSelectedProvider(opt.key)}
+                className={`group flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-all ${
+                  active
+                    ? "border-indigo-300 bg-white shadow-sm ring-2 ring-indigo-500/40 dark:border-indigo-500/40 dark:bg-zinc-900 dark:ring-indigo-400/40"
+                    : "border-zinc-200 bg-white/60 hover:border-indigo-200 hover:bg-white dark:border-zinc-700/60 dark:bg-zinc-900/40 dark:hover:border-indigo-500/30 dark:hover:bg-zinc-900/60"
+                }`}
+              >
+                <div className="flex w-full items-center justify-between gap-2">
+                  <span className="text-lg leading-none">{opt.emoji}</span>
+                  {active && (
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+                      ✓
+                    </span>
+                  )}
+                </div>
+                <div className={`mt-1.5 text-xs font-extrabold ${active ? "text-indigo-900 dark:text-indigo-100" : "text-zinc-800 dark:text-zinc-200"}`}>
+                  {opt.label}
+                </div>
+                <div className={`mt-0.5 line-clamp-2 text-[10.5px] leading-snug ${active ? "text-indigo-700/80 dark:text-indigo-200/85" : "text-zinc-500 dark:text-zinc-400"}`}>
+                  {opt.help}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {detect && (
+        <section
+          className={`rounded-2xl border p-4 ${
+            detect.enabled
+              ? detect.agnesFallback
+                ? "border-sky-200 bg-sky-50/60 dark:border-sky-500/30 dark:bg-sky-500/5"
+                : "border-emerald-200 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/5"
+              : "border-zinc-200 bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-800/40"
+          }`}
+        >
+          <div className="flex flex-wrap items-start gap-3">
+            <div
+              className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm ${
+                detect.enabled
+                  ? detect.agnesFallback
+                    ? "bg-gradient-to-br from-sky-500 to-cyan-500"
+                    : "bg-gradient-to-br from-emerald-500 to-teal-500"
+                  : "bg-zinc-400"
+              }`}
+            >
+              {detect.enabled ? "✓" : "✕"}
+            </div>
+            <div className="min-w-0 flex-1 space-y-1 text-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`text-sm font-bold ${
+                    detect.enabled
+                      ? detect.agnesFallback
+                        ? "text-sky-800 dark:text-sky-200"
+                        : "text-emerald-800 dark:text-emerald-200"
+                      : "text-zinc-700 dark:text-zinc-300"
                   }`}
                 >
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span className="text-lg leading-none">{opt.emoji}</span>
-                    {active && (
-                      <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
-                        ✓
+                  {detect.enabled
+                    ? detect.agnesFallback
+                      ? "当前使用：Agnes 兜底免费模式（可直接用，建议配置自己的 Key 更稳）"
+                      : "可用的 LLM：" + (detect.displayName || "AI")
+                    : "当前无可启用的 LLM"}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ring-1 ${
+                    detect.selected === "auto"
+                      ? "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
+                      : "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30"
+                  }`}
+                >
+                  选择方式：
+                  {detect.selected === "auto"
+                    ? "自动优先级"
+                    : `手动指定 ${PROVIDER_OPTIONS.find((p) => p.key === detect.selected)?.label ?? detect.selected}`}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ring-1 ${
+                    detect.usedFrom === "localStorage"
+                      ? "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30"
+                      : detect.usedFrom === "server_env"
+                        ? "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
+                        : detect.usedFrom === "server_env_fallback"
+                          ? "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30"
+                          : "bg-zinc-100 text-zinc-600 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
+                  }`}
+                >
+                  来源：
+                  {detect.usedFrom === "localStorage"
+                    ? "本机浏览器（你的配置）"
+                    : detect.usedFrom === "server_env"
+                      ? "服务器 .env.local"
+                      : detect.usedFrom === "server_env_fallback"
+                        ? "Agnes 兜底免费 Key"
+                        : "未配置"}
+                </span>
+              </div>
+              {detect.enabled && (
+                <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                  Provider：<b>{detect.provider || "-"}</b> · 模型：<b>{detect.model || "-"}</b>
+                </p>
+              )}
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                你自己填的 LLM 字段（不含 Agnes 兜底）：
+                <code className="ml-1 rounded bg-white/60 px-1 py-0.5 text-[11px] text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-700">
+                  {detect.effectiveKeys.length > 0 ? detect.effectiveKeys.join(", ") : "（无，用的 Agnes 兜底免费）"}
+                </code>
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <div className="space-y-3">
+        {SETTINGS_FIELDS.map((section) => {
+          const open = sectionOpen[section.provider];
+          const filled = section.fields.filter(
+            (f) => typeof values[f.key] === "string" && (values[f.key] as string).trim().length > 0,
+          ).length;
+          const testResult = perProviderTest[section.provider] || null;
+          const isLLM = section.provider !== "github";
+          const sectionProviderKey = section.provider === "github"
+            ? null
+            : section.provider as ProviderKey;
+          const nowTestingThis = testing === section.provider;
+          return (
+            <section
+              key={section.provider}
+              className={`rounded-2xl border transition-colors ${
+                open
+                  ? "border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/40"
+                  : "border-zinc-200/70 bg-white dark:border-zinc-800 dark:bg-zinc-900/10"
+              }`}
+            >
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  setSectionOpen((prev) => ({ ...prev, [section.provider]: !prev[section.provider] }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSectionOpen((prev) => ({ ...prev, [section.provider]: !prev[section.provider] }));
+                  }
+                }}
+                className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-t-2xl px-3.5 py-2.5 text-left sm:px-4 sm:py-3"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      {section.section}
+                    </h3>
+                    {filled > 0 && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
+                        {filled} / {section.fields.length} 已填
+                      </span>
+                    )}
+                    {testResult && section.provider !== "github" && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
+                          testResult.ok
+                            ? "bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30"
+                            : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30"
+                        }`}
+                      >
+                        {testResult.ok ? "✅ 通过" : "❌ 失败，展开"}
                       </span>
                     )}
                   </div>
-                  <div className={`mt-1.5 text-xs font-extrabold ${active ? "text-indigo-900 dark:text-indigo-100" : "text-zinc-800 dark:text-zinc-200"}`}>
-                    {opt.label}
-                  </div>
-                  <div className={`mt-0.5 line-clamp-2 text-[10.5px] leading-snug ${active ? "text-indigo-700/80 dark:text-indigo-200/85" : "text-zinc-500 dark:text-zinc-400"}`}>
-                    {opt.help}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {detect && (
-          <div
-            className={`mt-4 rounded-2xl border p-4 ${
-              detect.enabled
-                ? detect.agnesFallback
-                  ? "border-sky-200 bg-sky-50/60 dark:border-sky-500/30 dark:bg-sky-500/5"
-                  : "border-emerald-200 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/5"
-                : "border-zinc-200 bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-800/40"
-            }`}
-          >
-            <div className="flex flex-wrap items-start gap-3">
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm ${
-                  detect.enabled
-                    ? detect.agnesFallback
-                      ? "bg-gradient-to-br from-sky-500 to-cyan-500"
-                      : "bg-gradient-to-br from-emerald-500 to-teal-500"
-                    : "bg-zinc-400"
-                }`}
-              >
-                {detect.enabled ? "✓" : "✕"}
-              </div>
-              <div className="min-w-0 flex-1 space-y-1 text-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`text-sm font-bold ${
-                      detect.enabled
-                        ? detect.agnesFallback
-                          ? "text-sky-800 dark:text-sky-200"
-                          : "text-emerald-800 dark:text-emerald-200"
-                        : "text-zinc-700 dark:text-zinc-300"
-                    }`}
-                  >
-                    {detect.enabled
-                      ? detect.agnesFallback
-                        ? "当前使用：Agnes 兜底免费模式（可直接用，建议配置自己的 Key 更稳）"
-                        : "可用的 LLM：" + (detect.displayName || "AI")
-                      : "当前无可启用的 LLM"}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ring-1 ${
-                      detect.selected === "auto"
-                        ? "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
-                        : "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30"
-                    }`}
-                  >
-                    选择方式：
-                    {detect.selected === "auto"
-                      ? "自动优先级"
-                      : `手动指定 ${PROVIDER_OPTIONS.find((p) => p.key === detect.selected)?.label ?? detect.selected}`}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ring-1 ${
-                      detect.usedFrom === "localStorage"
-                        ? "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/30"
-                        : detect.usedFrom === "server_env"
-                          ? "bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/30"
-                          : detect.usedFrom === "server_env_fallback"
-                            ? "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30"
-                            : "bg-zinc-100 text-zinc-600 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
-                    }`}
-                  >
-                    来源：
-                    {detect.usedFrom === "localStorage"
-                      ? "本机浏览器（你的配置）"
-                      : detect.usedFrom === "server_env"
-                        ? "服务器 .env.local"
-                        : detect.usedFrom === "server_env_fallback"
-                          ? "Agnes 兜底免费 Key"
-                          : "未配置"}
-                  </span>
+                  {section.hint && (
+                    <p className="mt-0.5 line-clamp-1 text-[11.5px] text-zinc-500 dark:text-zinc-400">
+                      {section.hint}
+                    </p>
+                  )}
                 </div>
-                {detect.enabled && (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                    Provider：<b>{detect.provider || "-"}</b> · 模型：<b>{detect.model || "-"}</b>
-                  </p>
-                )}
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  你自己填的 LLM 字段（不含 Agnes 兜底）：
-                  <code className="ml-1 rounded bg-white/60 px-1 py-0.5 text-[11px] text-zinc-700 ring-1 ring-zinc-200 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-700">
-                    {detect.effectiveKeys.length > 0 ? detect.effectiveKeys.join(", ") : "（无，用的 Agnes 兜底免费）"}
-                  </code>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-5 space-y-3">
-          {SETTINGS_FIELDS.map((section) => {
-            const open = sectionOpen[section.provider];
-            const filled = section.fields.filter(
-              (f) => typeof values[f.key] === "string" && (values[f.key] as string).trim().length > 0,
-            ).length;
-            const testResult = perProviderTest[section.provider] || null;
-            const isLLM = section.provider !== "github";
-            const sectionProviderKey = section.provider === "github"
-              ? null
-              : section.provider as ProviderKey;
-            const nowTestingThis = testing === section.provider;
-            return (
-              <div
-                key={section.provider}
-                className={`rounded-2xl border transition-colors ${
-                  open
-                    ? "border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/40"
-                    : "border-zinc-200/70 bg-white dark:border-zinc-800 dark:bg-zinc-900/10"
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSectionOpen((prev) => ({ ...prev, [section.provider]: !prev[section.provider] }))
-                  }
-                  className="flex w-full items-center justify-between gap-2 rounded-t-2xl px-3.5 py-2.5 text-left sm:px-4 sm:py-3"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                          {section.section}
-                        </h3>
-                        {filled > 0 && (
-                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30">
-                            {filled} / {section.fields.length} 已填
-                          </span>
-                        )}
-                        {testResult && section.provider !== "github" && (
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${
-                              testResult.ok
-                                ? "bg-emerald-100 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30"
-                                : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30"
-                            }`}
-                          >
-                            {testResult.ok ? "✅ 通过" : "❌ 失败，展开"}
-                          </span>
-                        )}
-                      </div>
-                      {section.hint && (
-                        <p className="mt-0.5 line-clamp-1 text-[11.5px] text-zinc-500 dark:text-zinc-400">
-                          {section.hint}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fillDefaults(section.provider);
+                      if (!sectionOpen[section.provider]) {
+                        setSectionOpen((prev) => ({ ...prev, [section.provider]: true }));
+                      }
+                    }}
+                    className="hidden h-7 items-center rounded-md border border-zinc-200 bg-white px-2 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 md:inline-flex"
+                  >
+                    📋 填默认值
+                  </button>
+                  {isLLM && (
                     <button
                       type="button"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        fillDefaults(section.provider);
                         if (!sectionOpen[section.provider]) {
                           setSectionOpen((prev) => ({ ...prev, [section.provider]: true }));
                         }
+                        await onTestOne(section.provider, sectionProviderKey);
                       }}
-                      className="hidden h-7 items-center rounded-md border border-zinc-200 bg-white px-2 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 md:inline-flex"
+                      disabled={nowTestingThis}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-indigo-200 bg-white px-1.5 text-[10.5px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-50 sm:px-2 sm:text-[11px] dark:border-indigo-500/30 dark:bg-zinc-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
                     >
-                      📋 填默认值
+                      {nowTestingThis && (
+                        <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+                      )}
+                      <span className="sm:hidden">🧪测</span>
+                      <span className="hidden sm:inline">🧪 单独测这一家</span>
                     </button>
-                    {isLLM && (
-                      <button
-                        type="button"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (!sectionOpen[section.provider]) {
-                            setSectionOpen((prev) => ({ ...prev, [section.provider]: true }));
-                          }
-                          await onTestOne(section.provider, sectionProviderKey);
-                        }}
-                        disabled={nowTestingThis}
-                        className="inline-flex h-7 items-center gap-1 rounded-md border border-indigo-200 bg-white px-1.5 text-[10.5px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-50 disabled:opacity-50 sm:px-2 sm:text-[11px] dark:border-indigo-500/30 dark:bg-zinc-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
-                      >
-                        {nowTestingThis && (
-                          <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
+                  )}
+                  <span
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-transform dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 ${
+                      open ? "rotate-180" : ""
+                    }`}
+                  >
+                    ▾
+                  </span>
+                </div>
+              </div>
+
+              {open && (
+                <div className="grid gap-3 border-t border-zinc-200/70 px-4 py-4 sm:grid-cols-2 dark:border-zinc-700/60">
+                  {section.fields.map((f) => {
+                    const raw = values[f.key] || "";
+                    const type = revealed[f.key] ? "text" : f.type || "text";
+                    const masked = f.type === "password" && !revealed[f.key];
+                    return (
+                      <div key={f.key} className="sm:col-span-2">
+                        <label className="flex items-center justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                          <span>{f.label}</span>
+                          {masked && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRevealed((prev) => ({ ...prev, [f.key]: !prev[f.key] }))
+                              }
+                              className="rounded-full px-2 py-0.5 text-[10.5px] font-medium text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                            >
+                              {revealed[f.key] ? "🙈 隐藏" : "👁 显示"}
+                            </button>
+                          )}
+                        </label>
+                        <div className="mt-1 relative">
+                          <input
+                            type={type}
+                            value={raw}
+                            onChange={(e) => handleChange(f.key, e.target.value)}
+                            placeholder={f.placeholder || ""}
+                            spellCheck={false}
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            className="h-10 w-full rounded-xl border border-zinc-200 bg-white pl-3 pr-16 text-sm text-zinc-900 outline-none ring-0 transition-colors focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-100 dark:focus:border-indigo-500/50 dark:focus:ring-indigo-500/10"
+                          />
+                          {masked && raw.length > 0 && (
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                              {raw.length} 字符
+                            </span>
+                          )}
+                        </div>
+                        {f.help && (
+                          <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                            {f.help}
+                          </p>
                         )}
-                        <span className="sm:hidden">🧪测</span>
-                        <span className="hidden sm:inline">🧪 单独测这一家</span>
-                      </button>
-                    )}
-                    <span
-                      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-transform dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 ${
-                        open ? "rotate-180" : ""
+                      </div>
+                    );
+                  })}
+                  {isLLM && testResult && (
+                    <div
+                      className={`sm:col-span-2 rounded-xl border px-3 py-2.5 text-xs ${
+                        testResult.ok
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/5 dark:text-emerald-200"
+                          : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/5 dark:text-rose-200"
                       }`}
                     >
-                      ▾
-                    </span>
-                  </div>
-                </button>
-
-                {open && (
-                  <div className="grid gap-3 border-t border-zinc-200/70 px-4 py-4 sm:grid-cols-2 dark:border-zinc-700/60">
-                    {section.fields.map((f) => {
-                      const raw = values[f.key] || "";
-                      const type = revealed[f.key] ? "text" : f.type || "text";
-                      const masked = f.type === "password" && !revealed[f.key];
-                      return (
-                        <div key={f.key} className="sm:col-span-2">
-                          <label className="flex items-center justify-between text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                            <span>{f.label}</span>
-                            {masked && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setRevealed((prev) => ({ ...prev, [f.key]: !prev[f.key] }))
-                                }
-                                className="rounded-full px-2 py-0.5 text-[10.5px] font-medium text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                              >
-                                {revealed[f.key] ? "🙈 隐藏" : "👁 显示"}
-                              </button>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-0.5">{testResult.ok ? "✅" : "⚠️"}</span>
+                        <div className="flex-1 space-y-1">
+                          <div className="font-bold">
+                            {testResult.ok
+                              ? `${providerLabel(testResult.provider || section.provider)} 连接成功`
+                              : `${providerLabel(testResult.provider || section.provider)} 连接失败`}
+                            {testResult.statusCode && (
+                              <span className="ml-2 rounded-full bg-white/60 px-2 py-0.5 font-mono text-[10.5px] ring-1 ring-current/20">
+                                HTTP {testResult.statusCode}
+                              </span>
                             )}
-                          </label>
-                          <div className="mt-1 relative">
-                            <input
-                              type={type}
-                              value={raw}
-                              onChange={(e) => handleChange(f.key, e.target.value)}
-                              placeholder={f.placeholder || ""}
-                              spellCheck={false}
-                              autoCorrect="off"
-                              autoCapitalize="off"
-                              className="h-10 w-full rounded-xl border border-zinc-200 bg-white pl-3 pr-16 text-sm text-zinc-900 outline-none ring-0 transition-colors focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-100 dark:focus:border-indigo-500/50 dark:focus:ring-indigo-500/10"
-                            />
-                            {masked && raw.length > 0 && (
-                              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-                                {raw.length} 字符
+                            {testResult.model && (
+                              <span className="ml-2 rounded-full bg-white/60 px-2 py-0.5 font-mono text-[10.5px] ring-1 ring-current/20">
+                                {testResult.model}
                               </span>
                             )}
                           </div>
-                          {f.help && (
-                            <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                              {f.help}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {isLLM && testResult && (
-                      <div
-                        className={`sm:col-span-2 rounded-xl border px-3 py-2.5 text-xs ${
-                          testResult.ok
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/5 dark:text-emerald-200"
-                            : "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/5 dark:text-rose-200"
-                        }`}
-                      >
-                        <div className="flex items-start gap-2">
-                          <span className="mt-0.5">{testResult.ok ? "✅" : "⚠️"}</span>
-                          <div className="flex-1 space-y-1">
-                            <div className="font-bold">
-                              {testResult.ok
-                                ? `${providerLabel(testResult.provider || section.provider)} 连接成功`
-                                : `${providerLabel(testResult.provider || section.provider)} 连接失败`}
-                              {testResult.statusCode && (
-                                <span className="ml-2 rounded-full bg-white/60 px-2 py-0.5 font-mono text-[10.5px] ring-1 ring-current/20">
-                                  HTTP {testResult.statusCode}
-                                </span>
-                              )}
-                              {testResult.model && (
-                                <span className="ml-2 rounded-full bg-white/60 px-2 py-0.5 font-mono text-[10.5px] ring-1 ring-current/20">
-                                  {testResult.model}
-                                </span>
-                              )}
-                            </div>
-                            {testResult.message && <div className="whitespace-pre-wrap">{testResult.message}</div>}
-                          </div>
+                          {testResult.message && <div className="whitespace-pre-wrap">{testResult.message}</div>}
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <section className="rounded-3xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/30">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-extrabold text-zinc-900 dark:text-zinc-100">
+              ⬇️ 底部操作（和顶部一致）
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              改完配置直接点下面按钮保存，不用滚回最上面
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onTestAll}
+              disabled={testing !== false}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              {testing !== false ? (
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
+              ) : (
+                "🛰"
+              )}
+              {testing !== false ? "检测中..." : "🔍 检测可用模型"}
+            </button>
+            <button
+              type="button"
+              onClick={onReset}
+              className="inline-flex h-9 items-center gap-1 rounded-xl border border-rose-200 bg-white px-3.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50 dark:border-rose-500/30 dark:bg-zinc-900 dark:text-rose-300 dark:hover:bg-rose-500/10"
+            >
+              🗑 清空本机配置
+            </button>
+            <button
+              type="button"
+              onClick={onSave}
+              className="inline-flex h-9 items-center gap-1 rounded-xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 px-4 text-xs font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:brightness-110"
+            >
+              💾 保存到浏览器本地
+            </button>
+          </div>
         </div>
       </section>
     </div>
