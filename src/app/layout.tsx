@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://github-found.vercel.app/"),
+  alternates: {
+    canonical: "/",
+  },
   title: "GithubFound · GitHub 寻宝",
   description:
     "发现 GitHub 每日/每周/每月热门项目，按语言和分类筛选，AI 中文总结 + 风向标 + 魔法棒搜索重写，多模型一键切换。",
@@ -32,17 +36,27 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
+    url: "https://github-found.vercel.app/",
+    siteName: "GithubFound",
     title: "GithubFound · GitHub 寻宝",
     description:
       "发现 GitHub 每日热门项目，AI 中文总结 · 风向分析 · 魔法棒智能搜索，Agnes/千问/DeepSeek 多模型一键切换。",
     type: "website",
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "GithubFound Logo" }],
+    locale: "zh_CN",
+    images: [
+      {
+        url: "https://github-found.vercel.app/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: "GithubFound Logo",
+      },
+    ],
   },
   twitter: {
     card: "summary",
     title: "GithubFound · GitHub 寻宝",
     description: "GitHub 热门项目发现 + AI 中文总结 + 开源风向标",
-    images: ["/icon-512.png"],
+    images: ["https://github-found.vercel.app/icon-512.png"],
   },
 };
 

@@ -14,11 +14,13 @@
   </p>
 
   <p align="center">
+    <a href="https://github-found.vercel.app/"><img src="https://img.shields.io/badge/🏠%20在线体验-Vercel%20已部署-000?style=for-the-badge&logo=vercel&logoColor=white&labelColor=6366F1" /></a>
+    &nbsp;
     <a href="#-功能亮点"><img src="https://img.shields.io/badge/✨%20AI%20中文总结-8B5CF6?style=for-the-badge&logoColor=white" /></a>
     &nbsp;
-    <a href="#-配置llm"><img src="https://img.shields.io/badge/🧠%207家模型-D946EF?style=for-the-badge&logoColor=white" /></a>
+    <a href="#-配置llm"><img src="https://img.shields.io/badge/🧠%208家模型-D946EF?style=for-the-badge&logoColor=white" /></a>
     &nbsp;
-    <a href="#%EF%B8%8F-部署"><img src="https://img.shields.io/badge/▲%20Deploy-Vercel-000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
+    <a href="#%EF%B8%8F-部署"><img src="https://img.shields.io/badge/▲%20一键%20Deploy-000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
   </p>
   <p align="center">
     <a href="https://github.com/zhangyongtian/GithubFound/stargazers"><img src="https://img.shields.io/github/stars/zhangyongtian/GithubFound?style=social" alt="Stars" /></a>
@@ -85,6 +87,8 @@
 
 ## 🚀 快速开始
 
+> 🌟 **直接体验：[https://github-found.vercel.app/](https://github-found.vercel.app/)**（Vercel 已部署，打开即用）
+>
 > 要求 Node.js ≥ **18.17**（Next.js 16 要求），推荐 **Node 20 LTS**。
 
 ```bash
@@ -207,7 +211,11 @@ vercel --prod   # 之后的生产部署
 - **Cloudflare Pages**（免费 Workers 路由）：Hobby 档支持 Node 兼容模式；
 - **Railway / Render**：免费 500 小时 / 月足够个人试用。
 
-> ⚠️ 注意：不管哪种部署方式，**GitHub 搜索和 LLM 都是从 Server 端发起外网请求**，请遵守对应平台免费额度限制；Key 建议用本地 localStorage 设置不要硬编码到 CI。
+> ✅ **已发布示例：** [https://github-found.vercel.app/](https://github-found.vercel.app/)
+>
+> 直接 Fork 本仓库 → Vercel Import → 留空 Environment Variables（用 Agnes 默认免费 Key）→ 点 Deploy 即可得到你自己的同款站点。
+>
+> ⚠️ 不管哪种部署方式，**GitHub 搜索和 LLM 都是从 Server 端发起外网请求**，请遵守对应平台免费额度限制；Key 建议用本地 localStorage 设置不要硬编码到 CI。
 
 ---
 
