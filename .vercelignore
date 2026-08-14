@@ -5,3 +5,7 @@ dist
 .trae
 .log
 .figma
+.next
+.env
+.env.*
+!.env.example
