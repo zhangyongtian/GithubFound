@@ -23,11 +23,11 @@
     <a href="#%EF%B8%8F-部署"><img src="https://img.shields.io/badge/▲%20一键%20Deploy-000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
   </p>
   <p align="center">
-    <a href="https://github.com/zhangyongtian/GithubFound/stargazers"><img src="https://img.shields.io/github/stars/zhangyongtian/GithubFound?style=social" alt="Stars" /></a>
+    <a href="https://github.com/zhangyongtian/GithubFound/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/zhangyongtian/GithubFound?style=for-the-badge&logo=github&logoColor=white&labelColor=24292F&label=Stars&cacheSeconds=60" /></a>
     &nbsp;
-    <a href="https://github.com/zhangyongtian/GithubFound/issues"><img src="https://img.shields.io/github/issues/zhangyongtian/GithubFound?style=social" alt="Issues" /></a>
+    <a href="https://github.com/zhangyongtian/GithubFound/issues"><img alt="GitHub Issues" src="https://img.shields.io/github/issues/zhangyongtian/GithubFound?style=for-the-badge&logo=github&logoColor=white&labelColor=24292F&label=Issues&cacheSeconds=60" /></a>
     &nbsp;
-    <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=social" alt="License" /></a>
+    <a href="./LICENSE"><img alt="License" src="https://img.shields.io/github/license/zhangyongtian/GithubFound?style=for-the-badge&logo=github&logoColor=white&labelColor=24292F&label=License&cacheSeconds=60" /></a>
   </p>
 </div>
 
