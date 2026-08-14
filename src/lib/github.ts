@@ -156,3 +156,26 @@ export async function getRepoReadme(
     }
   });
 }
+
+export async function getRepoCommitActivity(
+  owner: string,
+  repo: string,
+  retries = 2
+): Promise<number[]> {
+  const cacheKey = `gh_commits:${owner}/${repo}`;
+  return withCache(cacheKey, 3600 * 12, async () => {
+    const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/stats/commit_activity`;
+    for (let i = 0; i < Math.max(1, retries + 1); i++) {
+      const res = await fetch(url, { headers: getHeaders() });
+      if (res.status === 202) {
+        await new Promise((r) => setTimeout(r, 1500));
+        continue;
+      }
+      if (!res.ok) return [];
+      const arr = (await res.json()) as Array<{ total: number; days: number[] }>;
+      if (!Array.isArray(arr) || arr.length === 0) return [];
+      return arr.map((w) => Number(w.total) || 0).slice(-52);
+    }
+    return [];
+  });
+}

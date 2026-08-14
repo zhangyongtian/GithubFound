@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GithubRepo } from "@/lib/types";
 import { formatCount, timeAgo, langColor } from "@/lib/utils";
 import { attachSettingsHeaders } from "@/lib/clientSettings";
+import ActivitySparkline from "./ActivitySparkline";
 
 interface Props {
   repo: GithubRepo;
@@ -411,6 +412,10 @@ export default function RepoCard({
               )}
             </div>
           )}
+        </div>
+
+        <div className="hidden shrink-0 sm:block self-start pl-1">
+          <ActivitySparkline fullName={repo.full_name} />
         </div>
       </div>
     </div>
