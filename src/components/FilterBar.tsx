@@ -115,18 +115,22 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
 
   const [queryInput, setQueryInput] = useState(initialQuery);
   const [rwExplanation, setRwExplanation] = useState<string | null>(null);
-  const navigatingFromInputRef = useRef<string | null>(null);
+  const navigatingTokenRef = useRef<number | null>(null);
+  const navigatingExpectedRef = useRef<string | null>(null);
 
   useEffect(() => {
     const expected = initialQuery;
-    if (navigatingFromInputRef.current !== null) {
-      if (navigatingFromInputRef.current === expected) {
-        navigatingFromInputRef.current = null;
-      } else {
-        navigatingFromInputRef.current = null;
-        setQueryInput(expected);
-        setRwExplanation(null);
+    if (navigatingTokenRef.current !== null) {
+      const token = navigatingTokenRef.current;
+      const navExpected = navigatingExpectedRef.current;
+      navigatingTokenRef.current = null;
+      navigatingExpectedRef.current = null;
+      if (navExpected === expected) {
+        return;
       }
+      setQueryInput(expected);
+      setRwExplanation(null);
+      void token;
       return;
     }
     setQueryInput((prev) => {
@@ -137,6 +141,8 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
 
   const runRewriteDirect = useCallback(
     (rawQuery: string) => {
+      navigatingTokenRef.current = null;
+      navigatingExpectedRef.current = null;
       setRewriting(true);
       setRwExplanation(null);
       const hotPromise = loadHotSuggestions(true).catch(() => {});
@@ -153,11 +159,15 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
           return (await res.json()) as RewriteResp;
         })
         .then((rw) => {
+          navigatingTokenRef.current = null;
+          navigatingExpectedRef.current = null;
           const rewritten = rw.success && rw.rewrittenQuery ? rw.rewrittenQuery : rawQuery;
           setQueryInput(rewritten);
           setRwExplanation(rw.explanation || null);
         })
         .catch(() => {
+          navigatingTokenRef.current = null;
+          navigatingExpectedRef.current = null;
           setQueryInput(rawQuery);
           setRwExplanation(null);
         });
@@ -181,7 +191,9 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
       setSearching(true);
       const patchQuery = patch.query;
       if (patchQuery !== undefined) {
-        navigatingFromInputRef.current = patchQuery || null;
+        const token = (navigatingTokenRef.current ?? 0) + 1;
+        navigatingTokenRef.current = token;
+        navigatingExpectedRef.current = patchQuery || null;
       }
       router.replace(target, { scroll: false });
     },
