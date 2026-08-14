@@ -467,6 +467,7 @@ export default function TrendingInsightCard(props: Props) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [aiStatus, setAiStatus] = useState<AiStatusResp | null>(null);
+  const reqSerialRef = { current: 0 };
 
   useEffect(() => {
     if (urlSince && urlSince !== since) setSince(urlSince);
@@ -510,8 +511,12 @@ export default function TrendingInsightCard(props: Props) {
 
   const load = useCallback(
     async (revalidate = false) => {
+      const serial = ++reqSerialRef.current;
       setLoading(true);
       setErrorMsg(null);
+      if (revalidate) {
+        setData(null);
+      }
       try {
         const url = `/api/trending-insight?${endpointQuery}${revalidate ? "&revalidate=1" : ""}`;
         const res = await fetch(url, attachSettingsHeaders({ cache: "no-store" }));
@@ -523,21 +528,22 @@ export default function TrendingInsightCard(props: Props) {
         if (!d.success) {
           throw new Error(d.error || "风向数据加载失败");
         }
+        if (serial !== reqSerialRef.current) return;
         setData(d);
       } catch (e) {
+        if (serial !== reqSerialRef.current) return;
         setErrorMsg(e instanceof Error ? e.message : "未知错误");
       } finally {
-        setLoading(false);
+        if (serial === reqSerialRef.current) {
+          setLoading(false);
+        }
       }
     },
     [endpointQuery]
   );
 
   useEffect(() => {
-    const id = setTimeout(() => {
-      void load(false);
-    }, 0);
-    return () => clearTimeout(id);
+    void load(false);
   }, [load]);
 
   const title =

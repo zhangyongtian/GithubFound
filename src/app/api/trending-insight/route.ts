@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       }
     })();
 
-    const cacheKey = `trending_insight:v11:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}:${llmSig}`;
+    const cacheKey = `trending_insight:v12:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}:${llmSig}`;
     if (revalidate) {
       deleteCache(cacheKey);
     }
@@ -292,7 +292,7 @@ ${topRepos}
             return await askLLM(
               userPrompt,
               "你是一位 GitHub 开源趋势观察员，资深中文技术分析师，擅长从热门项目提炼趋势，回答简洁、干货、不空泛。每个趋势方向必须引用具体代表项目：owner/repo ⭐xx。",
-              900,
+              2500,
               0.3
             );
           } catch (e) {

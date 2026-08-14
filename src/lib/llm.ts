@@ -32,20 +32,24 @@ export function detectProvider(
   const pick = <T>(p: ProviderKey, ok: boolean, val: () => ProviderConfig): ProviderConfig | null => {
     if (only(selected) !== "auto" && only(selected) !== p) return null;
     if (!ok) {
-      if (only(selected) === p) return val(); // 用户强制选了就返回，让调用方去抛错
+      if (only(selected) === p) return val();
       return null;
     }
     return val();
   };
 
-  const agnesKey = (process.env.AGNES_API_KEY || "").trim() || AGNES_DEFAULT_KEY;
-  const pAgnes = pick("agnes", Boolean(agnesKey), () => ({
+  const agnesEnvKey = (process.env.AGNES_API_KEY || "").trim();
+  const agnesIsUserProvided = Boolean(agnesEnvKey && agnesEnvKey !== AGNES_DEFAULT_KEY);
+  const agnesFinalKey = agnesEnvKey || AGNES_DEFAULT_KEY;
+  const makeAgnes = () => ({
     provider: "agnes" as const,
-    apiKey: agnesKey,
+    apiKey: agnesFinalKey,
     model: (process.env.AGNES_MODEL || "").trim() || AGNES_DEFAULT_MODEL,
     baseUrl: (process.env.AGNES_BASE_URL || "").trim() || AGNES_DEFAULT_BASE,
-  }));
-  if (pAgnes) return { ...pAgnes, selected: only(selected) };
+  });
+
+  if (only(selected) === "agnes") return { ...makeAgnes(), selected: "agnes" };
+
   const pDash = pick("dashscope", Boolean(process.env.DASHSCOPE_API_KEY), () => ({
     provider: "dashscope" as const,
     apiKey: process.env.DASHSCOPE_API_KEY as string,
@@ -87,6 +91,9 @@ export function detectProvider(
     model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
   }));
   if (pOr) return { ...pOr, selected: only(selected) };
+
+  const pAgnes = pick("agnes", Boolean(agnesFinalKey), makeAgnes);
+  if (pAgnes) return { ...pAgnes, selected: only(selected) };
   return { provider: "none", apiKey: "", model: "", selected: only(selected) };
 }
 
@@ -256,7 +263,22 @@ export async function askLLM(
         });
         if (!res.ok) throw new Error(`LLM ${res.status}`);
         const d = await res.json();
-        text = d.choices?.[0]?.message?.content?.trim() || "";
+        const choice = d.choices?.[0];
+        text = (choice?.message?.content ?? "").toString().trim();
+        const finishReason = choice?.finish_reason;
+        const usage = d.usage;
+        if (!text) {
+          console.warn(
+            `[LLM:${cfg.provider}] 返回空文本 · model=${cfg.model} · finish_reason=${finishReason} · usage=`,
+            usage,
+            "· raw d=",
+            JSON.stringify(d).slice(0, 800),
+          );
+        } else if (finishReason === "length") {
+          console.warn(
+            `[LLM:${cfg.provider}] 输出被 max_tokens 截断（finish_reason=length）· model=${cfg.model} · max_tokens=${maxTokens} · text len=${text.length}`,
+          );
+        }
         break;
       }
       case "anthropic": {
