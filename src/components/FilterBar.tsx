@@ -122,6 +122,8 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
     explanation: string;
   } | null>(null);
   const inputFocusRef = useRef(false);
+  const navigatingFromInputRef = useRef<string | null>(null);
+  const programmaticInputRef = useRef(false);
 
   useEffect(() => {
     if (inputFocusRef.current) return;
@@ -167,11 +169,13 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   const runRewriteIntoDraft = useCallback(
     (rawQuery: string) => {
       setRewriting(true);
+      programmaticInputRef.current = true;
       const hotPromise = loadHotSuggestions(true).catch(() => {});
       const currentLang = sp.get("language");
       const currentTopic = sp.get("topic");
       const rwQs = new URLSearchParams();
       rwQs.set("q", rawQuery);
+      rwQs.set("revalidate", "1");
       if (currentLang) rwQs.set("language", currentLang);
       if (currentTopic) rwQs.set("topic", currentTopic);
       const rwPromise = fetch(`/api/rewrite-query?${rwQs.toString()}`, attachSettingsHeaders({ cache: "no-store" }))
@@ -181,17 +185,20 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
         })
         .then((rw) => {
           const rewritten =
-            rw.success && rw.used && rw.rewrittenQuery ? rw.rewrittenQuery : rawQuery;
+            rw.success && rw.rewrittenQuery ? rw.rewrittenQuery : rawQuery;
+          const original = rw.originalQuery || rawQuery;
+          const explanation = rw.explanation || "";
+          programmaticInputRef.current = true;
           setQueryInput(rewritten);
-          setRewriteDraft({
-            rewritten,
-            original: rw.originalQuery || rawQuery,
-            explanation: rw.explanation || "",
+          setRewriteDraft({ rewritten, original, explanation });
+          queueMicrotask(() => {
+            programmaticInputRef.current = false;
           });
         })
         .catch(() => {
           setQueryInput(rawQuery);
           setRewriteDraft(null);
+          programmaticInputRef.current = false;
         });
       Promise.all([rwPromise, hotPromise]).finally(() => {
         setRewriting(false);
@@ -321,6 +328,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
                 onChange={(e) => {
                   const val = e.target.value;
                   setQueryInput(val);
+                  if (programmaticInputRef.current) return;
                   if (rewriteDraft) {
                     const trimmed = val.trim();
                     if (
