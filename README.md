@@ -1,10 +1,10 @@
 
 <div align="center">
-  <a href="https://github.com/your-github/githubfound">
+  <a href="https://github.com/zhangyongtian/GithubFound">
     <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdoLWJnIiB4MT0iMCIgeTE9IjAiIHgyPSIxIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwRjE3MkEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMUYyOTM3Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iMTY0IiBoZWlnaHQ9IjE2NCIgcng9IjQyIiByeT0iNDIiIGZpbGw9InVybCgjZ2gtYmcpIi8+CiAgPHJlY3QgeD0iOCIgeT0iOCIgd2lkdGg9IjE2NCIgaGVpZ2h0PSIxNjQiIHJ4PSI0MiIgcnk9IjQyIiBmaWxsPSJub25lIiBzdHJva2U9IiMzNzQxNTEiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC42Ii8+CiAgPHBhdGggZmlsbD0iI0ZGRkZGRiIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik05MCA0MC41Yy0xOS4zIDAtMzUgMTUuNy0zNSAzNSAwIDE1LjQ3IDkuOTkgMjguNTggMjMuOTYgMzMuMTcgMS43NS4zMiAyLjQtLjc1IDIuNC0xLjY3IDAtLjgzLS4wMy0zLjY0LS4wNS02LjYyLTkuNzYgMi4xMi0xMS44NC00LjAxLTExLjg0LTQuMDEtMS42LTQuMDYtMy45LTUuMTQtMy45LTUuMTQtMy4xOS0yLjE4LjI0LTIuMTQuMjQtMi4xNCAzLjUyLjI0IDUuMzcgMy42MSA1LjM3IDMuNjEgMy4xNCA1LjM3IDguMjMgMy44MiAxMC4yNSAyLjkyLjMxLTIuMjcgMS4yMi0zLjgyIDIuMjMtNC43LTcuOC0uODktMTYtMy45LTE2LTE3LjM1IDAtMy44MyAxLjM3LTYuOTcgMy42MS05LjQzLS4zNi0uODgtMS41Ny00LjQ1LjM0LTkuMjggMCAwIDIuOTUtLjk0IDkuNjUgMy42YTMzLjU1IDMzLjU1IDAgMDExNy42IDBjNi43LTQuNTQgOS42NS0zLjYgOS42NS0zLjYgMS45MSA0LjgzLjcxIDguNC4zNSA5LjI4IDIuMjQgMi40NiAzLjYxIDUuNiAzLjYxIDkuNDMgMCAxMy40OS04LjIyIDE2LjQ0LTE2LjA0IDE3LjMgMS4yNiAxLjA5IDIuMzkgMy4yNCAyLjM5IDYuNTQgMCA0LjcyLS4wNCA4LjUzLS4wNCA5LjcgMCAuOTMuNjMgMi4wMSAyLjQgMS42NyAxMy45Ni00LjU5IDIzLjkzLTE3LjcgMjMuOTMtMzMuMTcgMC0xOS4zLTE1LjctMzUtMzUtMzV6IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwIDQpIi8+Cjwvc3ZnPg==" alt="GithubFound" width="110" height="110" style="border-radius:26px;box-shadow:0 10px 30px rgba(139,92,246,.35)"/>
   </a>
 
-  <h1 align="center"><a href="https://github.com/your-github/githubfound">GithubFound · GitHub 寻宝</a></h1>
+  <h1 align="center"><a href="https://github.com/zhangyongtian/GithubFound">GithubFound · GitHub 寻宝</a></h1>
 
   <p align="center">
     <b>发现 GitHub 每日热门项目，AI 中文总结 · 风向分析 · 魔法棒智能搜索，多模型一键切换开箱即用。</b>
@@ -21,9 +21,9 @@
     <a href="#%EF%B8%8F-部署"><img src="https://img.shields.io/badge/▲%20Deploy-Vercel-000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
   </p>
   <p align="center">
-    <a href="https://github.com/your-github/githubfound/stargazers"><img src="https://img.shields.io/github/stars/your-github/githubfound?style=social" alt="Stars" /></a>
+    <a href="https://github.com/zhangyongtian/GithubFound/stargazers"><img src="https://img.shields.io/github/stars/zhangyongtian/GithubFound?style=social" alt="Stars" /></a>
     &nbsp;
-    <a href="https://github.com/your-github/githubfound/issues"><img src="https://img.shields.io/github/issues/your-github/githubfound?style=social" alt="Issues" /></a>
+    <a href="https://github.com/zhangyongtian/GithubFound/issues"><img src="https://img.shields.io/github/issues/zhangyongtian/GithubFound?style=social" alt="Issues" /></a>
     &nbsp;
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=social" alt="License" /></a>
   </p>
@@ -75,11 +75,11 @@
 
 ## 🖼️ 截图
 
-> 💡 把你网站的截图放到 `docs/` 目录，然后替换下面三行：
+> 💡 等 Vercel 发布完，把截图放到仓库 `docs/home.png` `docs/search.png` `docs/insight.png`，然后把下面三行替换成 `![](docs/home.png)` 即可。
 
 | 🔥 热门项目页 | 🔎 分类搜索 + 魔法棒 | 🧭 风向标 AI 分析 |
 |---|---|---|
-| ![](https://via.placeholder.com/880x520?text=Trending+Page) | ![](https://via.placeholder.com/880x520?text=Magic+Search) | ![](https://via.placeholder.com/880x520?text=AI+Insight) |
+| ![](https://img.shields.io/badge/%F0%9F%94%A5%20Trending%20Page-截图待补充-6366F1?style=for-the-badge) | ![](https://img.shields.io/badge/%F0%9F%94%8E%20Magic%20Search-截图待补充-10B981?style=for-the-badge) | ![](https://img.shields.io/badge/%F0%9F%A7%AD%20AI%20Insight-截图待补充-D946EF?style=for-the-badge) |
 
 ---
 
@@ -89,7 +89,7 @@
 
 ```bash
 # 1. 克隆
-git clone https://github.com/your-github/githubfound.git
+git clone https://github.com/zhangyongtian/GithubFound.git
 cd githubfound
 
 # 2. 安装依赖（npm / pnpm / yarn / bun 都可以）
