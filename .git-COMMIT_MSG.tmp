@@ -1,0 +1,35 @@
+ux(search): 魔法棒改直接覆盖机制，彻底删除 rewriteDraft 草稿双层态分裂 UI
+
+用户吐槽点搜索后生效/AI已填充两套状态看起来奇奇怪怪。
+简化为：魔法棒 onClick - fetch rewrite API - 直接 setQueryInput(rewrittenQuery)
+不再保留 orig_query / rewriteDraft / programmaticInputRef / inputFocusRef guard
+等一整套复杂草稿逻辑，代码量 -30% 可读性大幅提升。
+
+FilterBar.tsx 改动：
+- 删除 rewriteDraft state / initialOrig / initialRwExp / initialExpectedInput / initialDraft
+- 删除 inputFocusRef / programmaticInputRef / navigatingFromInputRef 多余 guard
+- runRewriteIntoDraft -> runRewriteDirect，不再存 rewriteDraft 只存 rwExplanation 展示用
+- updateParams 删除 forceRewrite 分支的 applyParams（之前导航竞态 bug 根源）
+  删除 carryDraft / orig_query / rw_exp 参数携带逻辑
+- form onSubmit 简化：直接拿 queryInput.trim()，不再判断 draft
+- onChange 简化：用户编辑就清空 rwExplanation（不再判断 rewritten vs original）
+- 当前关键词区 UI 彻底简化：
+  删除 AI已填充 / AI优化 / 实际搜索 / 点搜索后生效 4 个分裂 Pill
+  只保留 当前关键词 + 可选 explanation 一句话说明
+- 魔法棒样式判断由 rewriteDraft/currentOrig -> rwExplanation
+
+search/page.tsx 改动：
+- 删除顶部 Banner 中 还原为orig_query / AI智能扩展搜索 Banner
+  （现在没有 orig_query 了，不需要再做对比）
+- origQuery/rwExp 变量保留（兼容旧 URL 书签）但不再用于 UI
+- tokens / hasRanked / RepoCard origQuery prop 统一用 query
+
+后端配合：route.ts 已加 forceExpandEnglish 启发式英文扩展兜底
+即使 LLM 偷懒返回纯中文，也会被后端自动替换成英文 OR，
+前端直接显示 rewrite 结果不会再出现解释是英文却搜中文原始词的分裂态
+
+魔法棒体验流程优化后：
+1. 输入 免费电视 -> 点魔法棒 -> 右上角 千问优化中
+2. API 返回后，输入框文字直接变成 free tv OR iptv OR streaming
+3. explanation pill 显示一句话说明
+4. 直接点搜索 -> 1 次完成，没有草稿确认，体验线性直观

@@ -112,60 +112,33 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   }, [searching]);
 
   const initialQuery = useMemo(() => sp.get("query") || "", [sp]);
-  const initialOrig = useMemo(() => sp.get("orig_query") || "", [sp]);
-  const initialRwExp = useMemo(() => sp.get("rw_exp") || "", [sp]);
-  const initialExpectedInput = initialOrig || initialQuery;
-  const initialDraft =
-    initialExpectedInput && initialRwExp
-      ? { rewritten: initialQuery, original: initialExpectedInput, explanation: initialRwExp }
-      : null;
 
-  const [queryInput, setQueryInput] = useState(initialExpectedInput);
-  const [rewriteDraft, setRewriteDraft] =
-    useState<{ rewritten: string; original: string; explanation: string } | null>(initialDraft);
-  const inputFocusRef = useRef(false);
+  const [queryInput, setQueryInput] = useState(initialQuery);
+  const [rwExplanation, setRwExplanation] = useState<string | null>(null);
   const navigatingFromInputRef = useRef<string | null>(null);
-  const programmaticInputRef = useRef(false);
 
   useEffect(() => {
-    const expected = initialOrig || initialQuery;
-    const nextDraft =
-      expected && initialRwExp
-        ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
-        : null;
-
+    const expected = initialQuery;
     if (navigatingFromInputRef.current !== null) {
-      navigatingFromInputRef.current = null;
-      if (!inputFocusRef.current) setQueryInput(expected);
-      setRewriteDraft(nextDraft);
+      if (navigatingFromInputRef.current === expected) {
+        navigatingFromInputRef.current = null;
+      } else {
+        navigatingFromInputRef.current = null;
+        setQueryInput(expected);
+        setRwExplanation(null);
+      }
       return;
     }
-
-    if (inputFocusRef.current && rewriteDraft && !nextDraft) return;
-
     setQueryInput((prev) => {
       if (prev === expected) return prev;
       return expected;
     });
-    setRewriteDraft((prev) => {
-      if (!prev && !nextDraft) return prev;
-      if (
-        prev &&
-        nextDraft &&
-        prev.rewritten === nextDraft.rewritten &&
-        prev.original === nextDraft.original &&
-        prev.explanation === nextDraft.explanation
-      ) {
-        return prev;
-      }
-      return nextDraft;
-    });
-  }, [initialOrig, initialQuery, initialRwExp, rewriteDraft]);
+  }, [initialQuery]);
 
-  const runRewriteIntoDraft = useCallback(
+  const runRewriteDirect = useCallback(
     (rawQuery: string) => {
       setRewriting(true);
-      programmaticInputRef.current = true;
+      setRwExplanation(null);
       const hotPromise = loadHotSuggestions(true).catch(() => {});
       const currentLang = sp.get("language");
       const currentTopic = sp.get("topic");
@@ -180,21 +153,13 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
           return (await res.json()) as RewriteResp;
         })
         .then((rw) => {
-          const rewritten =
-            rw.success && rw.rewrittenQuery ? rw.rewrittenQuery : rawQuery;
-          const original = rw.originalQuery || rawQuery;
-          const explanation = rw.explanation || "";
-          programmaticInputRef.current = true;
+          const rewritten = rw.success && rw.rewrittenQuery ? rw.rewrittenQuery : rawQuery;
           setQueryInput(rewritten);
-          setRewriteDraft({ rewritten, original, explanation });
-          queueMicrotask(() => {
-            programmaticInputRef.current = false;
-          });
+          setRwExplanation(rw.explanation || null);
         })
         .catch(() => {
           setQueryInput(rawQuery);
-          setRewriteDraft(null);
-          programmaticInputRef.current = false;
+          setRwExplanation(null);
         });
       Promise.all([rwPromise, hotPromise]).finally(() => {
         setRewriting(false);
@@ -224,34 +189,22 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   );
 
   const updateParams = useCallback(
-    (patch: Record<string, string | null>, opts?: { forceRewrite?: boolean; carryDraft?: boolean }) => {
+    (patch: Record<string, string | null>, opts?: { forceRewrite?: boolean }) => {
       if (
         patch.query !== undefined &&
         mode === "search" &&
         patch.query &&
         opts?.forceRewrite
       ) {
-        runRewriteIntoDraft(patch.query);
-      } else if (patch.query === "") {
-        setRewriteDraft(null);
-        applyParams({ ...patch, orig_query: null, rw_exp: null });
-      } else if (patch.query !== undefined) {
-        if (opts?.carryDraft && rewriteDraft && rewriteDraft.rewritten === patch.query) {
-          applyParams({
-            ...patch,
-            orig_query: rewriteDraft.original,
-            rw_exp: rewriteDraft.explanation || null,
-          });
-          setRewriteDraft(null);
-        } else {
-          setRewriteDraft(null);
-          applyParams({ ...patch, orig_query: null, rw_exp: null });
-        }
-      } else {
-        applyParams(patch);
+        runRewriteDirect(patch.query);
+        return;
       }
+      if (patch.query !== undefined) {
+        setRwExplanation(null);
+      }
+      applyParams(patch);
     },
-    [applyParams, runRewriteIntoDraft, mode, rewriteDraft]
+    [applyParams, runRewriteDirect, mode]
   );
 
   const currentLang = sp.get("language") || "";
@@ -259,7 +212,6 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
   const currentSort = sp.get("sort") || "stars";
   const currentSince = sp.get("since") || "daily";
   const currentQuery = sp.get("query") || "";
-  const currentOrig = sp.get("orig_query") || "";
 
   const aiName = aiStatus?.displayName || "AI";
   const hotSugs: HotSuggestion[] =
@@ -299,12 +251,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
             onSubmit={(e) => {
               e.preventDefault();
               const final = queryInput.trim();
-              updateParams(
-                { query: final || null },
-                rewriteDraft && rewriteDraft.rewritten === final
-                  ? { carryDraft: true }
-                  : undefined
-              );
+              updateParams({ query: final || null });
             }}
             className="flex gap-2"
           >
@@ -315,29 +262,14 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
               <input
                 name="q"
                 value={queryInput}
-                onFocus={() => {
-                  inputFocusRef.current = true;
-                }}
-                onBlur={() => {
-                  inputFocusRef.current = false;
-                }}
                 onChange={(e) => {
                   const val = e.target.value;
                   setQueryInput(val);
-                  if (programmaticInputRef.current) return;
-                  if (rewriteDraft) {
-                    const trimmed = val.trim();
-                    if (
-                      trimmed !== rewriteDraft.rewritten.trim() &&
-                      trimmed !== rewriteDraft.original.trim()
-                    ) {
-                      setRewriteDraft(null);
-                    }
-                  }
+                  if (rwExplanation) setRwExplanation(null);
                 }}
                 placeholder="如: 编程工具, 前端组件库, yolov 相关..."
                 className={`h-11 w-full rounded-xl border bg-zinc-50 pl-9 pr-28 text-sm outline-none transition-colors focus:bg-white focus:ring-4 dark:bg-zinc-800 dark:text-zinc-100 dark:focus:bg-zinc-900 ${
-                  rewriteDraft
+                  rwExplanation
                     ? "border-violet-300 focus:border-violet-400 focus:ring-violet-500/10 dark:border-violet-500/40"
                     : "border-zinc-200 focus:border-indigo-400 focus:ring-indigo-500/10 dark:border-zinc-700"
                 }`}
@@ -350,13 +282,11 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
                     updateParams({ query: queryInput.trim() }, { forceRewrite: true })
                   }
                   className={`h-8 rounded-lg px-2 text-xs font-semibold transition-all disabled:opacity-40 ${
-                    rewriteDraft
+                    rwExplanation
                       ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/20 hover:brightness-110"
-                      : currentOrig
-                        ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md shadow-violet-500/20 hover:brightness-110"
-                        : "border border-violet-200 bg-white text-violet-700 hover:bg-violet-50 dark:border-violet-500/30 dark:bg-zinc-900 dark:text-violet-300 dark:hover:bg-violet-500/10"
+                      : "border border-violet-200 bg-white text-violet-700 hover:bg-violet-50 dark:border-violet-500/30 dark:bg-zinc-900 dark:text-violet-300 dark:hover:bg-violet-500/10"
                   }`}
-                  title={`用 ${aiName}优化当前输入词（只填到输入框，不自动搜）`}
+                  title={`用 ${aiName} 优化关键词（直接替换输入框）`}
                 >
                   ✨ 魔法棒
                 </button>
@@ -365,7 +295,7 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
                     type="button"
                     onClick={() => {
                       setQueryInput("");
-                      setRewriteDraft(null);
+                      setRwExplanation(null);
                       updateParams({ query: null });
                     }}
                     className="h-8 w-8 rounded-full text-zinc-400 transition-colors hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
@@ -443,43 +373,26 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
             })}
           </div>
 
-          {(rewriteDraft || currentQuery || currentOrig) && (
+          {(queryInput.trim() || currentQuery) && (
             <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              <span>当前关键词:</span>
-              {rewriteDraft ? (
-                <>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-violet-100 to-fuchsia-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 shadow-sm ring-1 ring-violet-200 dark:from-violet-500/10 dark:to-fuchsia-500/10 dark:text-violet-300 dark:ring-violet-500/30">
-                    <span className="-mt-0.5">✨</span> AI 已填充：{rewriteDraft.original}
-                  </span>
-                  {rewriteDraft.explanation && (
-                    <span className="rounded-full bg-zinc-50 px-2.5 py-0.5 text-[11px] text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-300 dark:ring-zinc-700">
-                      💡 {rewriteDraft.explanation}
-                    </span>
-                  )}
-                  <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
-                    ⚡ 点搜索后生效：{rewriteDraft.rewritten}
-                  </span>
-                </>
-              ) : (
-                <>
-                  {currentOrig && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-violet-100 to-fuchsia-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 shadow-sm ring-1 ring-violet-200 dark:from-violet-500/10 dark:to-fuchsia-500/10 dark:text-violet-300 dark:ring-violet-500/30">
-                      <span className="-mt-0.5">✨</span> AI 优化：{currentOrig}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
-                    {currentOrig
-                      ? `实际搜索：${currentQuery}`
-                      : `「${currentQuery || ""}」`}
-                    <button
-                      onClick={() => updateParams({ query: null })}
-                      className="ml-0.5 h-4 w-4 rounded-full text-indigo-500 transition-colors hover:bg-indigo-200 hover:text-indigo-800 dark:hover:bg-indigo-500/30 dark:hover:text-indigo-100"
-                      title="删除关键词"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                </>
+              <span>当前关键词：</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                「{queryInput.trim() || currentQuery}」
+                {queryInput.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => updateParams({ query: null })}
+                    className="ml-0.5 h-4 w-4 rounded-full text-indigo-500 transition-colors hover:bg-indigo-200 hover:text-indigo-800 dark:hover:bg-indigo-500/30 dark:hover:text-indigo-100"
+                    title="删除关键词"
+                  >
+                    ✕
+                  </button>
+                )}
+              </span>
+              {rwExplanation && (
+                <span className="rounded-full bg-zinc-50 px-2.5 py-0.5 text-[11px] text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-800/60 dark:text-zinc-300 dark:ring-zinc-700">
+                  💡 {rwExplanation}
+                </span>
               )}
             </p>
           )}

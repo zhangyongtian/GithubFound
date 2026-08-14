@@ -66,6 +66,94 @@ function trimQueryToGitHubLimit(q: string, original: string): string {
   return out || original;
 }
 
+const EN_TRANSLATION_HINTS: Record<string, string[]> = {
+  免费: ["free", "open source"],
+  电视: ["tv", "iptv", "streaming"],
+  视频: ["video", "streaming", "media"],
+  音乐: ["music", "audio"],
+  游戏: ["game", "gaming"],
+  射击: ["fps", "shooter", "aim"],
+  辅助: ["assist", "helper", "tool"],
+  检测: ["detection", "detect"],
+  目标: ["object", "target"],
+  聊天: ["chat", "conversation"],
+  机器人: ["bot", "chatbot", "agent"],
+  大模型: ["llm", "large language model"],
+  模型: ["model", "llm"],
+  推理: ["inference", "serving"],
+  前端: ["frontend", "ui", "web"],
+  组件: ["component", "library"],
+  库: ["library", "lib"],
+  工具: ["tool", "utility", "cli"],
+  框架: ["framework"],
+  智能体: ["agent", "autonomous"],
+  编程: ["coding", "programming", "code"],
+  学习: ["learn", "tutorial", "course"],
+  资源: ["resources", "awesome", "collection"],
+  算法: ["algorithm", "leetcode"],
+  数据: ["data", "database"],
+  可视化: ["visualization", "chart", "dashboard"],
+  管理: ["admin", "dashboard", "management"],
+  后台: ["admin", "backend", "dashboard"],
+  接口: ["api", "rest", "graphql"],
+  开源: ["open source", "oss", "self-hosted"],
+  自动: ["auto", "automation"],
+  办公: ["office", "productivity", "workspace"],
+  笔记: ["notes", "note-taking", "knowledge base"],
+  绘画: ["drawing", "image generation", "stable diffusion"],
+  图片: ["image", "photo", "vision"],
+  识别: ["recognition", "ocr"],
+  翻译: ["translate", "translation"],
+  语音: ["voice", "speech", "asr", "tts"],
+  下载: ["download", "downloader"],
+  电影: ["movie", "media", "video"],
+  直播: ["live", "streaming", "livestream"],
+  导航: ["navigation", "dashboard", "homepage"],
+  网盘: ["cloud storage", "cloud drive", "webdav"],
+  搜索: ["search", "semantic search", "rag"],
+};
+
+function containsCJK(s: string): boolean {
+  return /[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af]/.test(s);
+}
+
+function forceExpandEnglish(q: string, original: string): string {
+  const trimmed = (q || "").trim();
+  if (!trimmed) return original;
+
+  const hasEnoughEnglish = /[A-Za-z]{3,}/.test(trimmed);
+  const hasAnyEnglish = /[A-Za-z]/.test(trimmed);
+  const hasConnectingOps = /\b(OR|AND|NOT)\b|in:|^\s*-/i.test(trimmed);
+  const looksExpanded = hasEnoughEnglish || (hasAnyEnglish && hasConnectingOps);
+  if (looksExpanded && trimmed !== original) return trimmed;
+
+  const tokens: string[] = [];
+  Object.entries(EN_TRANSLATION_HINTS).forEach(([zh, ens]) => {
+    if (original.includes(zh)) {
+      for (const en of ens) {
+        if (!tokens.includes(en)) tokens.push(en);
+      }
+    }
+  });
+  const extractedEn = (original.match(/[A-Za-z][A-Za-z0-9._-]{1,}/g) || []).map((x) => x.toLowerCase());
+  for (const e of extractedEn) {
+    if (!tokens.includes(e)) tokens.push(e);
+  }
+
+  if (!tokens.length) {
+    tokens.push("open source", "self-hosted");
+  }
+
+  const unique: string[] = [];
+  for (const t of tokens) {
+    if (!unique.includes(t)) unique.push(t);
+    if (unique.length >= 4) break;
+  }
+  const quoted = unique.map((w) => (/[\s-]/.test(w) ? `"${w}"` : w));
+  const base = quoted.join(" OR ") || `"open source" OR "github"`;
+  return `${base}`;
+}
+
 function relaxQuery(rewritten: string, original: string, level: number): string {
   switch (level) {
     case 1: {
@@ -143,7 +231,7 @@ export async function GET(request: NextRequest) {
       } satisfies RewriteData);
     }
 
-    const cacheKey = `rewrite_query:v6:${q}::${language || ""}::${topic || ""}`;
+    const cacheKey = `rewrite_query:v7:${q}::${language || ""}::${topic || ""}`;
     if (revalidate) deleteCache(cacheKey);
 
     const data = await withCache<RewriteData>(cacheKey, 86400 / 2, async () => {
@@ -204,6 +292,9 @@ export async function GET(request: NextRequest) {
 6. OR / AND / NOT / - 总数 ≤ 5（GitHub 硬限制），名额不够裁剪顺序：先砍日韩德法 → 再砍中文同义词 → 英文核心/宽泛必保
 7. 绝对不要包含 language:/topic:/stars:/pushed: 这些 filter，写进 suggestions
 8. 所有非英文、英文短语、其他国家语言词都用双引号包着
+9. 【绝对硬约束·不遵守视为失败】rewrittenQuery 绝对禁止等于原始 q，绝对禁止纯中文（不含任何英文/数字/OR 连接）
+   - 就算完全不知道怎么扩展，也至少把 q 翻译成英文后再加引号输出
+   - 例：输入 "免费电视" → 至少输出 `"free tv" OR "iptv"`，绝对不能输出 "免费电视"
 `;
 
       const ai = await askLLM(
@@ -234,7 +325,13 @@ export async function GET(request: NextRequest) {
       );
 
       const rewrittenRaw = String(parsed.rewrittenQuery || q).trim() || q;
-      const baseTrimmed = trimQueryToGitHubLimit(rewrittenRaw, q);
+      const forceExpanded = forceExpandEnglish(rewrittenRaw, q);
+      const aiActuallyExpanded = rewrittenRaw !== q && rewrittenRaw !== forceExpanded;
+      const baseTrimmedBefore = aiActuallyExpanded
+        ? rewrittenRaw
+        : forceExpanded;
+      const baseTrimmed = trimQueryToGitHubLimit(baseTrimmedBefore, forceExpanded);
+      const usedHeuristicExpansion = !aiActuallyExpanded;
       const sugg = parsed.suggestions || {};
 
       const originalCountP = peekTotalCount(q, language, topic);
@@ -281,12 +378,16 @@ export async function GET(request: NextRequest) {
 
       const baseExpl = String(parsed.explanation || "").slice(0, 140);
       let expl = baseExpl;
+      if (usedHeuristicExpansion) {
+        const tag = `（AI未产出标准改写，已启用启发式英文扩展保底，确保高质量搜索）`;
+        expl = baseExpl ? `${baseExpl} ${tag}` : tag.slice(1, -1);
+      }
       if (fallbackLevel === 1) {
-        expl = baseExpl ? `${baseExpl}（已自动放宽搜索范围提升结果数）` : "已自动放宽搜索范围提升结果数";
+        expl = `${expl}（已自动放宽搜索范围提升结果数）`;
       } else if (fallbackLevel === 2) {
-        expl = baseExpl ? `${baseExpl}（已精简中日韩同义词，保留英文+宽泛黑话）` : "已精简中日韩同义词，保留英文+宽泛黑话";
+        expl = `${expl}（已精简中日韩同义词，保留英文+宽泛黑话）`;
       } else if (fallbackLevel === 3) {
-        expl = baseExpl ? `${baseExpl}（仅保留英文核心+宽泛黑话，确保命中）` : "仅保留英文核心+宽泛黑话，确保命中";
+        expl = `${expl}（仅保留英文核心+宽泛黑话，确保命中）`;
       }
 
       return {

@@ -122,7 +122,7 @@ export default async function SearchPage({
     if (stars >= 1000) return { label: "⭐ 1k+", className: "bg-gradient-to-r from-yellow-500 to-lime-500", bonus: 1.02 };
     return { label: "", className: "", bonus: 1 };
   }
-  const tokens = (origQuery || query || "").split(/\s+|[，,。.！!？?、/\\()（）\[\]【】'"\"`~:：;；|]|#/).filter(Boolean);
+  const tokens = (query || "").split(/\s+|[，,。.！!？?、/\\()（）\[\]【】'"\"`~:：;；|]|#/).filter(Boolean);
   const maxStars = Math.max(...result.items.map((r) => r.stargazers_count), 1);
   let rankedItems = [...result.items].map((repo, idx) => {
     const match = isMatchTag(repo, tokens);
@@ -140,7 +140,7 @@ export default async function SearchPage({
     return { repo, rankScore, match, hot, top, band };
   });
   rankedItems.sort((a, b) => b.rankScore - a.rankScore);
-  const hasRanked = result.items.length > 0 && (origQuery || query) !== undefined;
+  const hasRanked = result.items.length > 0 && query !== undefined;
 
   return (
     <div className="space-y-6">
@@ -153,82 +153,23 @@ export default async function SearchPage({
             点击项目卡片的 <b className="text-white">「中文总结」</b> 让 AI 帮你解读。
           </p>
           {result.success && (
-            <div className="mt-5 flex flex-wrap gap-4 text-xs text-white/80 sm:text-sm">
-              <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                <span>🎯</span> 匹配{" "}
-                <b className="text-white">{formatCount(result.total_count)}</b> 个项目
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                <span>📦</span> 本页 <b className="text-white">{result.items.length}</b> 个
-              </div>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                <span>⭐</span> 合计{" "}
-                <b className="text-white">{formatCount(totalStars)}</b> Stars
-              </div>
-              {origQuery && (
-                <Link
-                  href={
-                    buildSearchUrl({
-                      ...sp,
-                      query: origQuery,
-                      orig_query: undefined,
-                      rw_exp: undefined,
-                    })
-                  }
-                  scroll={false}
-                  className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-3 py-1 font-semibold text-white shadow-md shadow-violet-900/20 hover:brightness-110"
-                  title="点击用原始关键词重新搜索（不经过 AI 优化）"
-                >
-                  <span>✨</span>
-                  AI 已优化
-                  <span className="opacity-80">·</span>
-                  <span className="underline-offset-2 hover:underline">
-                    还原为「{origQuery}」
-                  </span>
-                </Link>
+                <div className="mt-5 flex flex-wrap gap-4 text-xs text-white/80 sm:text-sm">
+                  <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                    <span>🎯</span> 匹配{" "}
+                    <b className="text-white">{formatCount(result.total_count)}</b> 个项目
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                    <span>📦</span> 本页 <b className="text-white">{result.items.length}</b> 个
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
+                    <span>⭐</span> 合计{" "}
+                    <b className="text-white">{formatCount(totalStars)}</b> Stars
+                  </div>
+                </div>
               )}
             </div>
-          )}
+          </div>
         </section>
-
-        {origQuery && (
-          <section className="mb-5">
-            <div className="flex flex-wrap items-start gap-3 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 px-4 py-3 shadow-sm dark:border-violet-500/20 dark:from-violet-500/10 dark:via-zinc-900/30 dark:to-fuchsia-500/10">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-sm shadow-sm">
-                ✨
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="rounded-full bg-violet-600 px-2 py-0.5 font-bold text-white">
-                    AI 智能扩展搜索
-                  </span>
-                  <span className="text-zinc-500 dark:text-zinc-400">
-                    你的输入 <span className="font-semibold text-zinc-800 dark:text-zinc-100">「{origQuery}」</span> → 实际搜索 <span className="font-semibold text-violet-700 dark:text-violet-300 break-all">「{query}」</span>
-                  </span>
-                  <Link
-                    href={
-                      buildSearchUrl({
-                        ...sp,
-                        query: origQuery,
-                        orig_query: undefined,
-                        rw_exp: undefined,
-                      })
-                    }
-                    scroll={false}
-                    className="ml-auto inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-zinc-600 shadow-sm ring-1 ring-zinc-200 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-700"
-                  >
-                    <span>↩️</span> 用原始关键词
-                  </Link>
-                </div>
-                {rwExp && (
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-300">
-                    💡 {rwExp}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
 
         <Suspense>
           <section className="mb-6">
@@ -305,7 +246,7 @@ export default async function SearchPage({
                     totalStars={totalStars}
                     items={result.items}
                     since={since}
-                    origQuery={origQuery || query}
+                    origQuery={query}
                   />
                 ))}
               </div>
