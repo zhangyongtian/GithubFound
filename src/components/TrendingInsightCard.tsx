@@ -746,7 +746,7 @@ export default function TrendingInsightCard(props: Props) {
                 <span className="text-[11px] text-slate-400">Weekly vs Daily 名次提升</span>
               </div>
               <div className="mt-3 grid gap-2">
-                {data.topMovers.map((m) => (
+                {data.topMovers.map((m, i) => (
                   <a
                     key={m.full_name}
                     href={m.html_url}
@@ -758,7 +758,7 @@ export default function TrendingInsightCard(props: Props) {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-orange-500 to-rose-500 text-[10px] font-black text-white shadow-sm">
-                            {m.rank}
+                            {i + 1}
                           </span>
                           <span className="truncate text-[13px] font-bold text-slate-900 group-hover:text-orange-700 dark:text-zinc-100 dark:group-hover:text-orange-400">
                             {m.full_name}

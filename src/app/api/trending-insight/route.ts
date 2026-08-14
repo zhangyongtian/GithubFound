@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 type RepoSlim = Pick<GithubRepo, "full_name" | "description" | "stargazers_count" | "language" | "topics" | "html_url" | "updated_at" | "id">;
 type TopMover = {
   rank: number;
+  weeklyStarsRank: number;
   full_name: string;
   html_url: string;
   description: string | null;
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     const perPage = 21;
     const revalidate = sp.get("revalidate") !== null;
 
-    const cacheKey = `trending_insight:v8:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}`;
+    const cacheKey = `trending_insight:v9:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}`;
     if (revalidate) {
       deleteCache(cacheKey);
     }
@@ -132,10 +133,13 @@ export async function GET(request: NextRequest) {
       dailySlim.forEach((r, i) => dailyIdx.set(r.full_name, i));
       const weeklyIdx = new Map<string, number>();
       weeklySlim.forEach((r, i) => weeklyIdx.set(r.full_name, i));
-      const topMovers: TopMover[] = [];
-      for (let rank = 1; rank <= Math.min(3, weeklySlim.length); rank++) {
-        const repo = weeklySlim[rank - 1];
-        if (!repo) break;
+      const seen = new Set<string>();
+      const candidate: Omit<TopMover, "rank">[] = [];
+      for (let i = 0; i < weeklySlim.length; i++) {
+        const repo = weeklySlim[i];
+        if (!repo) continue;
+        if (seen.has(repo.full_name)) continue;
+        seen.add(repo.full_name);
         const di = dailyIdx.get(repo.full_name);
         const wi = weeklyIdx.get(repo.full_name);
         let velocityDelta = 0;
@@ -144,8 +148,8 @@ export async function GET(request: NextRequest) {
         } else if (di === undefined && wi !== undefined) {
           velocityDelta = Math.max(5, 21 - wi);
         }
-        topMovers.push({
-          rank,
+        candidate.push({
+          weeklyStarsRank: i + 1,
           full_name: repo.full_name,
           html_url: repo.html_url,
           description: repo.description,
@@ -154,7 +158,38 @@ export async function GET(request: NextRequest) {
           velocity_delta: velocityDelta,
         });
       }
-      topMovers.sort((a, b) => b.velocity_delta - a.velocity_delta);
+      for (let i = 0; i < dailySlim.length; i++) {
+        const repo = dailySlim[i];
+        if (!repo) continue;
+        if (seen.has(repo.full_name)) continue;
+        seen.add(repo.full_name);
+        const di = dailyIdx.get(repo.full_name)!;
+        const wi = weeklyIdx.get(repo.full_name);
+        let velocityDelta = 0;
+        if (wi !== undefined) {
+          velocityDelta = wi - di;
+        } else {
+          velocityDelta = Math.max(5, 21 - di);
+        }
+        candidate.push({
+          weeklyStarsRank: wi !== undefined ? wi + 1 : 0,
+          full_name: repo.full_name,
+          html_url: repo.html_url,
+          description: repo.description,
+          stargazers_count: repo.stargazers_count,
+          language: repo.language,
+          velocity_delta: velocityDelta,
+        });
+      }
+      const topMovers: TopMover[] = candidate
+        .sort((a, b) => {
+          const d = b.velocity_delta - a.velocity_delta;
+          if (d !== 0) return d;
+          return b.stargazers_count - a.stargazers_count;
+        })
+        .slice(0, 3)
+        .map((m, i) => ({ ...m, rank: i + 1 }));
+
 
       const topLangs = Object.entries(langCount)
         .sort((a, b) => b[1] - a[1])
@@ -197,7 +232,7 @@ export async function GET(request: NextRequest) {
           .join("\n");
 
         const velocityLines = topMovers.slice(0, 5).map(
-          (m) => `- [代表项目] ${m.full_name} ⭐${m.stargazers_count}（周榜第${m.rank}，今日名次提升${m.velocity_delta}）`
+          (m) => `- [代表项目] ${m.full_name} ⭐${m.stargazers_count}（周榜第${m.weeklyStarsRank || "未上榜"}，今日名次提升${m.velocity_delta}）`
         );
 
         const userPrompt = `你是一位 GitHub 开源生态观察员，负责对"所有提供的热门项目"做整体趋势归纳，而不是只挑 4 个项目举例。
