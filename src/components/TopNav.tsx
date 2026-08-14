@@ -62,6 +62,9 @@ export default function TopNav() {
             <span className="text-[10.5px] font-medium text-zinc-500 dark:text-zinc-400">
               GitHub 寻宝 · AI 中文总结
             </span>
+            <span className="mt-0.5 text-[9.5px] font-semibold tracking-wide text-zinc-400 dark:text-zinc-500">
+              build 2026.08.14.4
+            </span>
           </div>
         </Link>
 
