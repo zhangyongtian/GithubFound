@@ -6,6 +6,7 @@ const sharp = require("sharp");
 const ROOT = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT, "public");
 const ASSETS_DIR = path.join(ROOT, "assets");
+const SRC_APP_DIR = path.join(ROOT, "src", "app");
 const SRC_SVG = path.join(PUBLIC_DIR, "logo.svg");
 
 const ICO_SIZES = [16, 24, 32, 48, 64, 256];
@@ -64,7 +65,7 @@ function makeIco(entries) {
 }
 
 async function main() {
-  for (const d of [PUBLIC_DIR, ASSETS_DIR]) {
+  for (const d of [PUBLIC_DIR, ASSETS_DIR, SRC_APP_DIR]) {
     if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
   }
   const svgBuf = fs.readFileSync(SRC_SVG);
@@ -83,6 +84,7 @@ async function main() {
   const icoBuf = makeIco(icoEntries);
   fs.writeFileSync(path.join(PUBLIC_DIR, "favicon.ico"), icoBuf);
   fs.writeFileSync(path.join(ASSETS_DIR, "favicon.ico"), icoBuf);
+  fs.writeFileSync(path.join(SRC_APP_DIR, "favicon.ico"), icoBuf);
 
   for (const def of PNG_SIZES) {
     const inner = def.size - def.pad * 2;
