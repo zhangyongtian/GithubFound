@@ -53,7 +53,7 @@ export default function ActivitySparkline({ fullName, width = 160, height = 56 }
   const recent12 = state.data?.recent12 || 0;
 
   const { pathLine, pathArea, level } = useMemo(() => {
-    if (weeks.length === 0) return { pathLine: "", pathArea: "", level: "冷" as const };
+    if (weeks.length === 0 || state.loading) return { pathLine: "", pathArea: "", level: "冷" as const };
     const padX = 2;
     const padY = 4;
     const innerW = width - padX * 2;
@@ -72,7 +72,7 @@ export default function ActivitySparkline({ fullName, width = 160, height = 56 }
     if (activeWeeks >= 26 && recent12 >= 5) lvl = "热";
     else if (activeWeeks >= 10 || recent12 >= 2) lvl = "温";
     return { pathLine: line, pathArea: area, level: lvl };
-  }, [weeks, total, recent12, width, height]);
+  }, [weeks, total, recent12, width, height, state.loading]);
 
   const levelColor =
     level === "热" ? "text-emerald-600 dark:text-emerald-400" :
@@ -95,17 +95,54 @@ export default function ActivitySparkline({ fullName, width = 160, height = 56 }
       title={tip}
     >
       <div
-        className={`relative flex items-center justify-center rounded-2xl px-2.5 py-2 ring-1 ${levelBg}`}
+        className={`relative flex items-center justify-center rounded-2xl px-2.5 py-2 ring-1 ${
+          state.loading ? "bg-zinc-50 ring-zinc-200/60 dark:bg-zinc-800 dark:ring-zinc-700" : levelBg
+        }`}
         style={{ height: height + 16 }}
       >
         <div
           className="relative overflow-hidden rounded-lg"
           style={{ width: width - 20, height }}
         >
-          {state.loading || weeks.length === 0 ? (
+          {state.loading ? (
+            <>
+              <div className="absolute inset-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                <div
+                  className="h-full w-[200%] animate-[shimmer_1.6s_infinite_linear]"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, rgba(228,228,231,0) 0%, rgba(165,180,252,0.35) 35%, rgba(244,114,182,0.35) 50%, rgba(165,180,252,0.35) 65%, rgba(228,228,231,0) 100%)",
+                  }}
+                />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-indigo-500/90 dark:text-indigo-300/90">
+                <svg
+                  className="h-3 w-3 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    stroke="currentColor"
+                    strokeOpacity="0.2"
+                    strokeWidth="3"
+                  />
+                  <path
+                    d="M21 12a9 9 0 0 1-9 9"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                加载中
+              </div>
+            </>
+          ) : weeks.length === 0 ? (
             <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" preserveAspectRatio="none" aria-hidden>
               <defs>
-                <linearGradient id={`spark-skel-${fullName}`} x1="0" x2="1" y1="0" y2="0">
+                <linearGradient id={`spark-skel-empty-${fullName}`} x1="0" x2="1" y1="0" y2="0">
                   <stop offset="0%" stopColor="#e4e4e7" stopOpacity="0.5" />
                   <stop offset="50%" stopColor="#f4f4f5" stopOpacity="0.9" />
                   <stop offset="100%" stopColor="#e4e4e7" stopOpacity="0.5" />
@@ -113,10 +150,9 @@ export default function ActivitySparkline({ fullName, width = 160, height = 56 }
               </defs>
               <path
                 d={`M0,${height - 4} L${width},${height - 4}`}
-                stroke={`url(#spark-skel-${fullName})`}
+                stroke={`url(#spark-skel-empty-${fullName})`}
                 strokeWidth="3"
                 strokeLinecap="round"
-                className="animate-pulse"
               />
             </svg>
           ) : (
@@ -147,12 +183,29 @@ export default function ActivitySparkline({ fullName, width = 160, height = 56 }
         </div>
       </div>
       <div className="flex w-full items-center justify-between gap-1 px-1 text-[10px] font-medium leading-none">
-        <span className={`flex items-center gap-1 truncate ${levelColor}`}>
-          {weeks.length === 0 ? "— 无数据" : level === "热" ? "🔥 长期活跃" : level === "温" ? "🌱 稳定维护" : "🧊 偶尔更新"}
-        </span>
-        <span className="shrink-0 tabular-nums text-zinc-400 dark:text-zinc-500">
-          {weeks.length === 0 ? "0/52w" : `${weeks.filter((n) => n > 0).length}/52w`}
-        </span>
+        {state.loading ? (
+          <>
+            <span className="flex items-center gap-1 truncate text-indigo-500/80 dark:text-indigo-300/80">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+              </span>
+              拉取中
+            </span>
+            <span className="shrink-0 tabular-nums text-zinc-400 dark:text-zinc-500">
+              —
+            </span>
+          </>
+        ) : (
+          <>
+            <span className={`flex items-center gap-1 truncate ${levelColor}`}>
+              {weeks.length === 0 ? "— 无数据" : level === "热" ? "🔥 长期活跃" : level === "温" ? "🌱 稳定维护" : "🧊 偶尔更新"}
+            </span>
+            <span className="shrink-0 tabular-nums text-zinc-400 dark:text-zinc-500">
+              {weeks.length === 0 ? "0/52w" : `${weeks.filter((n) => n > 0).length}/52w`}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );
