@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     const language = sp.get("language");
     const topic = sp.get("topic");
     const sort = sp.get("sort") || "stars";
-    const perPage = 21;
+    const perPage = 50;
     const revalidate = sp.get("revalidate") !== null;
 
     const freshMeta = (() => {
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       }
     })();
 
-    const cacheKey = `trending_insight:v10:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}:${llmSig}`;
+    const cacheKey = `trending_insight:v11:${since}:${language || ""}:${topic || ""}:${sort}:${perPage}:${llmSig}`;
     if (revalidate) {
       deleteCache(cacheKey);
     }
@@ -92,6 +92,7 @@ export async function GET(request: NextRequest) {
       const dailySlim: RepoSlim[] = [];
       const weeklySlim: RepoSlim[] = [];
       let trendingError: string | null = null;
+      let aiError: string | null = null;
 
       async function pullSince(targetSince: SINCE_VALUES) {
         try {
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
           sort: (sort as SORT_VALUES) || "stars",
           order: "desc",
           page: 1,
-          perPage: 21,
+          perPage: 50,
         });
           const list: RepoSlim[] = [];
           for (const r of result?.items || []) {
@@ -160,7 +161,7 @@ export async function GET(request: NextRequest) {
         if (di !== undefined && wi !== undefined) {
           velocityDelta = wi - di;
         } else if (di === undefined && wi !== undefined) {
-          velocityDelta = Math.max(5, 21 - wi);
+          velocityDelta = Math.max(5, 50 - wi);
         }
         candidate.push({
           weeklyStarsRank: i + 1,
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
         if (wi !== undefined) {
           velocityDelta = wi - di;
         } else {
-          velocityDelta = Math.max(5, 21 - di);
+          velocityDelta = Math.max(5, 50 - di);
         }
         candidate.push({
           weeklyStarsRank: wi !== undefined ? wi + 1 : 0,
@@ -238,7 +239,7 @@ export async function GET(request: NextRequest) {
         };
 
         const topRepos = slim
-          .slice(0, 12)
+          .slice(0, 20)
           .map(
             (r) =>
               `- ${r.full_name} (stars:${r.stargazers_count}) ${r.language ? `lang:${r.language}` : ""}: ${r.description || "(无描述)"}`
@@ -286,12 +287,19 @@ ${velocityLines.length > 0 ? velocityLines.join("\n") : "（暂无数据）"}
 ${topRepos}
 `;
 
-        const ai = await askLLM(
-          userPrompt,
-          "你是一位 GitHub 开源趋势观察员，资深中文技术分析师，擅长从热门项目提炼趋势，回答简洁、干货、不空泛。每个趋势方向必须引用具体代表项目：owner/repo ⭐xx。",
-          900,
-          0.3
-        );
+        const ai = await (async () => {
+          try {
+            return await askLLM(
+              userPrompt,
+              "你是一位 GitHub 开源趋势观察员，资深中文技术分析师，擅长从热门项目提炼趋势，回答简洁、干货、不空泛。每个趋势方向必须引用具体代表项目：owner/repo ⭐xx。",
+              900,
+              0.3
+            );
+          } catch (e) {
+            aiError = e instanceof Error ? e.message : "AI 调用失败";
+            return { text: "", ok: false };
+          }
+        })();
         if (ai.text) {
           insight = ai.text;
           mode = "ai";
@@ -308,6 +316,7 @@ ${topRepos}
         since,
         topMovers,
         trendingError,
+        aiError,
       };
     });
 

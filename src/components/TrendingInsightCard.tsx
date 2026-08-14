@@ -30,6 +30,7 @@ type TrendingInsightData = {
     velocity_delta: number;
   }>;
   trendingError?: string | null;
+  aiError?: string | null;
 };
 
 type AiStatusResp = {
@@ -610,7 +611,16 @@ export default function TrendingInsightCard(props: Props) {
                 </span>
               )}
               {data?.mode === "fallback" && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1 shadow-sm">
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1 shadow-sm"
+                  title={
+                    data?.aiError
+                      ? `AI 生成失败：${data.aiError}`
+                      : aiStatus?.enabled
+                        ? "AI 已配置但当前返回空，已自动降级本地统计，点右上角「刷新风向」可重试"
+                        : "尚未配置大模型 API Key，可点右上角齿轮去「大模型apikey设置」，保存后回来点刷新风向"
+                  }
+                >
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse" />
                   本地分析（未走 AI）
                 </span>
@@ -618,11 +628,6 @@ export default function TrendingInsightCard(props: Props) {
               <span className="rounded-full bg-slate-900/90 text-white text-[11px] font-semibold px-2.5 py-1">
                 {SINCE_LABEL[since]} · {data?.sampleCount ?? "—"} 个样本
               </span>
-              {data?.mode === "fallback" && (
-                <span className="rounded-full bg-amber-100 text-amber-700 text-[11px] font-semibold px-2.5 py-1">
-                  ⚠ 本地兜底（AI 不可用）
-                </span>
-              )}
               {(data?.provider || data?.model) && data?.mode !== "fallback" && (
                 <span
                   className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700"
