@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
       } satisfies RewriteData);
     }
 
-    const cacheKey = `rewrite_query:v3:${q}::${language || ""}::${topic || ""}`;
+    const cacheKey = `rewrite_query:v4:${q}::${language || ""}::${topic || ""}`;
     if (revalidate) deleteCache(cacheKey);
 
     const data = await withCache<RewriteData>(cacheKey, 86400 / 2, async () => {
@@ -168,21 +168,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
-【你写 rewrittenQuery 的要点】
-1. 多语言同义词扩充（根据搜索内容判断，不要死套，科技发达国家语言同义词用引号包裹再 OR 进去）：
-   - 必加「中文」常用同义词或直译：比如 "射击游戏" → 加 "射击游戏" OR "FPS游戏" OR "第一人称射击"；"前端组件" → 加 "前端组件" OR "组件库" OR "UI组件"
-   - 「英文」标准术语本来就有，但还要再加 2~4 个英文近义词/系列名/缩写：比如 yolov → yolov8 OR yolov10 OR ultralytics
-   - 根据内容智能判断是否加这些科技强国语言同义词（日本/韩国/德国/法国/俄罗斯/以色列/芬兰/瑞典）的常用词：
-     * 日语：常见日语社区常用编程相关词汇（如 フレームワーク、AI、ゲームエンジン、ライブラリ 等）
-     * 韩语/德语/法语/俄语等只有在搜索相关领域有知名开源项目或知名公司开发时才加
-   - 语言同义词必须用双引号精确括起来，再 OR 进去，避免分词问题
-2. 合并中文 + 英文 + 其他语言同义词一起，英文主写在 rewrittenQuery 合并
-3. 限定搜索位置：优先加 "in:name,description,topics,readme"（readme 能命中多语言文档/中文/日文韩文等文档内容）；教程/资料/列表类项目才加 "in:readme,name,description"
-4. 排除词特别克制：一般不超过 1 个，比如 "-awesome"，除非明显噪音
-5. 短语匹配如果是一串词且是一个项目名，用引号包裹，如 "\"segment anything\""
-6. OR / AND / NOT / -排除词 总数量不要超过 5 个（GitHub Search API 有硬限制，多了 422），少点同义词不要超
+【你写 rewrittenQuery 的要点 —— 英文主搜索优先】
+1. 多语言同义词扩充优先级：英文主词 > 中文同义词 > 可选日/韩/德/法等（OR 总数≤5，不够就砍掉中文以外的，英文绝对不能丢）
+   - 【强制·最高优先级】英文核心词必须 2~4 个：无论用户输入中文还是英文，先把核心语义翻成英文标准开源术语再 OR：
+     * 例：用户输入"射击游戏辅助"→"aim assist" OR "first-person shooter" OR "fps cheat"
+     * 例：用户输入"大模型推理"→"llm inference" OR "vllm" OR "llama.cpp"
+     * 例：用户输入"前端组件库"→"ui component" OR "design system" OR "component library"
+     * 例：用户输入"yolov 射击游戏"→yolov 已有英文，再补 yolov8 OR ultralytics 及英文语义："aim assist" OR "fps"
+   - 【次优先级】中文同义词保留 1~2 个（用户有中文输入时）：如"射击游戏" OR "FPS游戏"；"AI智能体" OR "Agent"
+   - 【可选·占剩余名额】科技强国语言同义词：
+     * 日语：ゲームエイム(游戏瞄准)、フレームワーク(框架)、LLM、AIエージェント 等
+     * 韩语：UI 컴포넌트、LLM 추론 等；德语/法语只在欧洲有大生态时加（如 blockchain/quantum）
+   - 所有多语言词必须双引号精确括起来 OR 进去，英文短语也建议加引号避免分词
+2. rewrittenQuery 结构：英文主词写在最前（无引号单也行），然后才是中文 + 其他语言带引号 OR
+3. 限定搜索位置：加 "in:name,description,topics,readme"（readme 能命中多语言文档，尤其英文 README 是国际开源主流）
+4. 排除词特别克制：最多 1 个，如 "-awesome" "-tutorial" "-list"，除非明显噪音
+5. 短语匹配如果是一个专有项目名，用引号包裹如 "\"segment anything\""
+6. OR / AND / NOT / -排除词 总数量 ≤ 5（GitHub 硬限制），不够时砍：先砍日韩德法→再砍中文→英文主词必须留
 7. 绝对不要包含 language:/topic:/stars:/pushed: 这些 filter，这些写进 suggestions
-8. 中文/其他非英文词汇、或 日语/韩语/德语 等国家语言的同义词 要用双引号包着
+8. 所有非英文词汇、英文短语、其他国家语言词都用双引号包着
 `;
 
       const ai = await askLLM(
