@@ -121,10 +121,12 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
     original: string;
     explanation: string;
   } | null>(null);
+  const inputFocusRef = useRef(false);
 
   useEffect(() => {
-    const expected = initialOrig || initialQuery;
+    if (inputFocusRef.current) return;
     if (navigatingFromInputRef.current !== null) {
+      const expected = initialOrig || initialQuery;
       if (navigatingFromInputRef.current === expected) {
         navigatingFromInputRef.current = null;
       } else {
@@ -138,17 +140,29 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
       }
       return;
     }
-    const activeDraftMatches =
-      rewriteDraft && (rewriteDraft.rewritten === queryInput || rewriteDraft.original === expected);
-    if (!activeDraftMatches) {
-      setQueryInput(expected);
-      setRewriteDraft(
+    const expected = initialOrig || initialQuery;
+    setQueryInput((prev) => {
+      if (prev === expected) return prev;
+      return expected;
+    });
+    setRewriteDraft((prev) => {
+      const next =
         expected && initialRwExp
           ? { rewritten: initialQuery, original: expected, explanation: initialRwExp }
-          : null
-      );
-    }
-  }, [initialOrig, initialQuery, initialRwExp, rewriteDraft, queryInput]);
+          : null;
+      if (!prev && !next) return prev;
+      if (
+        prev &&
+        next &&
+        prev.rewritten === next.rewritten &&
+        prev.original === next.original &&
+        prev.explanation === next.explanation
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [initialOrig, initialQuery, initialRwExp]);
 
   const runRewriteIntoDraft = useCallback(
     (rawQuery: string) => {
@@ -307,6 +321,12 @@ export default function FilterBar({ mode }: { mode: "trending" | "search" }) {
               <input
                 name="q"
                 value={queryInput}
+                onFocus={() => {
+                  inputFocusRef.current = true;
+                }}
+                onBlur={() => {
+                  inputFocusRef.current = false;
+                }}
                 onChange={(e) => {
                   const val = e.target.value;
                   setQueryInput(val);
