@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
       } satisfies RewriteData);
     }
 
-    const cacheKey = `rewrite_query:v5:${q}::${language || ""}::${topic || ""}`;
+    const cacheKey = `rewrite_query:v6:${q}::${language || ""}::${topic || ""}`;
     if (revalidate) deleteCache(cacheKey);
 
     const data = await withCache<RewriteData>(cacheKey, 86400 / 2, async () => {
@@ -179,25 +179,31 @@ export async function GET(request: NextRequest) {
   }
 }
 
-【你写 rewrittenQuery 的要点 —— 英文主搜索优先】
-1. 多语言同义词扩充优先级：英文主词 > 中文同义词 > 可选日/韩/德/法等（OR 总数≤5，不够就砍掉中文以外的，英文绝对不能丢）
-   - 【强制·最高优先级】英文核心词必须 2~4 个：无论用户输入中文还是英文，先把核心语义翻成英文标准开源术语再 OR：
-     * 例：用户输入"射击游戏辅助"→"aim assist" OR "first-person shooter" OR "fps cheat"
-     * 例：用户输入"大模型推理"→"llm inference" OR "vllm" OR "llama.cpp"
-     * 例：用户输入"前端组件库"→"ui component" OR "design system" OR "component library"
-     * 例：用户输入"yolov 射击游戏"→yolov 已有英文，再补 yolov8 OR ultralytics 及英文语义："aim assist" OR "fps"
-   - 【次优先级】中文同义词保留 1~2 个（用户有中文输入时）：如"射击游戏" OR "FPS游戏"；"AI智能体" OR "Agent"
-   - 【可选·占剩余名额】科技强国语言同义词：
-     * 日语：ゲームエイム(游戏瞄准)、フレームワーク(框架)、LLM、AIエージェント 等
-     * 韩语：UI 컴포넌트、LLM 추론 等；德语/法语只在欧洲有大生态时加（如 blockchain/quantum）
-   - 所有多语言词必须双引号精确括起来 OR 进去，英文短语也建议加引号避免分词
-2. rewrittenQuery 结构：英文主词写在最前（无引号单也行），然后才是中文 + 其他语言带引号 OR
-3. 限定搜索位置：加 "in:name,description,topics,readme"（readme 能命中多语言文档，尤其英文 README 是国际开源主流）
-4. 排除词特别克制：最多 1 个，如 "-awesome" "-tutorial" "-list"，除非明显噪音
-5. 短语匹配如果是一个专有项目名，用引号包裹如 "\"segment anything\""
-6. OR / AND / NOT / -排除词 总数量 ≤ 5（GitHub 硬限制），不够时砍：先砍日韩德法→再砍中文→英文主词必须留
-7. 绝对不要包含 language:/topic:/stars:/pushed: 这些 filter，这些写进 suggestions
-8. 所有非英文词汇、英文短语、其他国家语言词都用双引号包着
+【你写 rewrittenQuery 的要点 —— 英文主搜索优先 + 描述不准也能命中的发散扩展】
+1. 多语言同义词扩充优先级：英文核心词(必2~4个) > 英文宽泛/黑话/近义词(必1~2个) > 中文同义词(1个保底) > 可选日/韩/德/法等
+   - 【强制·最高优先级】英文核心词 2~4 个标准开源术语 OR：
+     * 例：射击游戏辅助→"aim assist" OR "first-person shooter"
+     * 例：大模型推理→"llm inference" OR "vllm" OR "llama.cpp"
+     * 例：前端组件库→"ui component" OR "design system" OR "component library"
+     * 例：yolov 射击游戏→yolov8 OR ultralytics + "aim assist"
+   - 【必加·第二优先级】英文「宽泛词/社区黑话/近义词/典型错拼」1~2 个：目的是"用户描述不准也能命中"
+     * 例：射击游戏辅助→加 "aimbot" 或 "triggerbot" 或 "valorant" 或 "cs2"（黑话/具体游戏名）
+     * 例：大模型推理→加 "gpu inference" 或 "llm serving"（宽泛近义词）
+     * 例：AI智能体→加 "autonomous agent" 或 "agent framework"（宽泛）
+     * 例："聊天机器人"→加 "chatbot" OR "llm chat"（宽泛）
+   - 【第三优先级】中文同义词只保留 1 个保底，别多（占 OR 名额）
+   - 【可选·剩下名额】科技强国语言词：日语（ゲームエイム/フレームワーク/AIエージェント）、韩/德/法等仅大生态
+   - 所有多语言词必须双引号精确括起来 OR
+2. rewrittenQuery 结构顺序：英文核心词→宽泛黑话词→中文同义词（OR 不够时先砍中文→再砍日韩，英文核心+宽泛绝不丢）
+3. in 限定两种模式（根据用户描述精准度判断）：
+   - 模式 A「精准命中」用 in:name,description,topics,readme（用户描述准确时）
+   - 模式 B「宽泛命中」【推荐默认用这个】不加任何 in:（因为用户经常描述不准，不加 in 能命中 README 正文/issue/discussions，结果多 5~10 倍）
+   - ⚠️ 默认用模式 B（不加 in:），除非用户描述非常专业明确
+4. 排除词完全禁用！不要加任何 -awesome -tutorial -list 等！（描述不准时排除词会误伤真实目标项目）
+5. 专有项目名用引号，如 "\"segment anything\""
+6. OR / AND / NOT / - 总数 ≤ 5（GitHub 硬限制），名额不够裁剪顺序：先砍日韩德法 → 再砍中文同义词 → 英文核心/宽泛必保
+7. 绝对不要包含 language:/topic:/stars:/pushed: 这些 filter，写进 suggestions
+8. 所有非英文、英文短语、其他国家语言词都用双引号包着
 `;
 
       const ai = await askLLM(
@@ -239,39 +245,35 @@ export async function GET(request: NextRequest) {
       let fallbackLevel = 0;
       let finalCount = firstRewrittenCount;
 
-      const baseOriginalThreshold = originalCount > 0 ? Math.max(2, Math.floor(originalCount / 20)) : 20;
+      const baseOriginalThreshold = originalCount > 0 ? Math.max(1, Math.floor(originalCount / 40)) : 10;
       const softThreshold = (c: number) => c >= 0 && c >= baseOriginalThreshold;
-      const absMin = (c: number) => c >= 0 && c >= 2;
+      const absMin = (c: number) => c >= 0 && c >= 1;
 
       if (!softThreshold(firstRewrittenCount)) {
         const relaxed1 = relaxQuery(baseTrimmed, q, 1);
         const c1 = await peekTotalCount(relaxed1, language, topic);
-        if (softThreshold(c1) && c1 > (firstRewrittenCount < 0 ? 0 : firstRewrittenCount)) {
+        if (absMin(c1)) {
           finalQuery = relaxed1;
           finalCount = c1;
           fallbackLevel = 1;
         } else {
           const relaxed2 = relaxQuery(baseTrimmed, q, 2);
           const c2 = await peekTotalCount(relaxed2, language, topic);
-          if (softThreshold(c2) && c2 > (firstRewrittenCount < 0 ? 0 : firstRewrittenCount)) {
+          if (absMin(c2)) {
             finalQuery = relaxed2;
             finalCount = c2;
             fallbackLevel = 2;
           } else {
             const relaxed3 = relaxQuery(baseTrimmed, q, 3);
             const c3 = await peekTotalCount(relaxed3, language, topic);
-            if (absMin(c3) && c3 > (firstRewrittenCount < 0 ? 0 : firstRewrittenCount)) {
+            if (absMin(c3)) {
               finalQuery = relaxed3;
               finalCount = c3;
               fallbackLevel = 3;
-            } else if (absMin(firstRewrittenCount)) {
+            } else {
               finalQuery = baseTrimmed;
               finalCount = firstRewrittenCount;
               fallbackLevel = 0;
-            } else {
-              finalQuery = q;
-              finalCount = originalCount;
-              fallbackLevel = 4;
             }
           }
         }
@@ -280,13 +282,11 @@ export async function GET(request: NextRequest) {
       const baseExpl = String(parsed.explanation || "").slice(0, 140);
       let expl = baseExpl;
       if (fallbackLevel === 1) {
-        expl = baseExpl ? `${baseExpl}（已放宽 in: 限定提升结果数）` : "已放宽 in: 限定提升结果数";
+        expl = baseExpl ? `${baseExpl}（已自动放宽搜索范围提升结果数）` : "已自动放宽搜索范围提升结果数";
       } else if (fallbackLevel === 2) {
-        expl = baseExpl ? `${baseExpl}（已精简中日韩同义词，保留英文主词提升结果）` : "已精简中日韩同义词，保留英文主词提升结果";
+        expl = baseExpl ? `${baseExpl}（已精简中日韩同义词，保留英文+宽泛黑话）` : "已精简中日韩同义词，保留英文+宽泛黑话";
       } else if (fallbackLevel === 3) {
-        expl = baseExpl ? `${baseExpl}（仅保留英文核心词与排除词，确保有结果）` : "仅保留英文核心词与排除词，确保有结果";
-      } else if (fallbackLevel === 4) {
-        expl = baseExpl ? `${baseExpl}（改写结果过少，兜底使用输入关键词）` : "改写结果过少，兜底使用输入关键词";
+        expl = baseExpl ? `${baseExpl}（仅保留英文核心+宽泛黑话，确保命中）` : "仅保留英文核心+宽泛黑话，确保命中";
       }
 
       return {
